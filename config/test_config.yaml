@@ -1,0 +1,94 @@
+### Browsers config
+browsers:
+  chrome:
+    use: true
+    vnc-image:
+      enable: true # download VNC version of webdriver
+      versions: highest # highest (highest browser version); array with browser versions [97.0]
+    default-version: highest # highest or custom default browser version (97.0)
+    versions: # from min and to max in steps of 1
+      range:
+        min: 85.0
+        max: 97.0
+        ignore: [87.0]
+    #capabilities:
+    #  name: ChromeDriver
+    #  vnc_enabled: True
+    #  video_enabled: False
+    #  session_timeout: "1m"
+
+
+
+  chrome-mobile:
+    use: true
+    default-version: highest
+    versions:
+      array: [86.0]
+
+  firefox:
+    use: false
+    vnc-image:
+      enable: false
+      versions: [90.0, 91.0, 96.0]
+    default-version: 92.0 # highest or custom default browser version (96.0)
+    versions:
+      array: [85.0, 86.0, 87.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0, 96.0]
+
+  opera:
+    use: true
+    vnc-image:
+      enable: false
+    default-version: highest
+    versions:
+      latest: true
+
+
+### Aerokube config
+aerokube:
+  selenoid:
+    image-version: latest # not secure, use fix version!
+    host-port: 4444
+
+  selenoid-ui: # web user interface
+    image-version: latest # not secure, use fix version!
+    host-port: 8080
+
+  ggr: # load balancer
+    image-version: latest # not secure, use fix version!
+    host-port: 4444
+    encrypt-connection: false
+
+  ggr-ui: # web user interface
+    image-version: latest # not secure, use fix version!
+    host-port: 8888
+
+### GGR hosts config
+ggr-hosts:
+  -
+    ip: 11.11.11.11
+
+
+### Selenoid hosts config
+selenoid-hosts:
+  -
+    ip: 111.111.111.111
+    port: 4444
+    count: 1 # load balancing priority
+    cpu-limit: 8 # 1 CPU = 1 browser session
+    teams-quota: [QA_TEAM_1, QA_TEAM_2] # quota for ggr config
+    region-name: us-east
+  -
+    ip: 111.111.111.112
+    port: 4444
+    count: 1 # load balancing priority
+    cpu-limit: 8 # 1 CPU = 1 browser session
+    teams-quota: [QA_TEAM_1] # quota for ggr config
+    region-name: us-west
+  -
+    ip: 111.111.111.113
+    port: 4444
+    count: 3 # load balancing priority
+    cpu-limit: 2 # 1 CPU = 1 browser session
+    teams-quota: [DEV_TEAM_1] # quota for ggr config
+    region-name: us-west
+    vnc: vnc://111.111.111.113:6900

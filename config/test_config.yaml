@@ -1,6 +1,8 @@
 ### Browsers config
 browsers:
-  chrome:
+  -
+    type: chrome
+    base-name: ChromeDriver
     use: true
     vnc-image:
       enable: true # download VNC version of webdriver
@@ -11,21 +13,22 @@ browsers:
         min: 85.0
         max: 97.0
         ignore: [87.0]
-    #capabilities:
-    #  name: ChromeDriver
-    #  vnc_enabled: True
-    #  video_enabled: False
-    #  session_timeout: "1m"
+      #capabilities:
+      #  vnc_enabled: True
+      #  video_enabled: False
+      #  session_timeout: "1m"
 
-
-
-  chrome-mobile:
+  -
+    type: chrome-mobile
+    base-name: ChromeMobileDriver
     use: true
     default-version: highest
     versions:
       array: [86.0]
 
-  firefox:
+  -
+    type: firefox
+    base-name: FirefoxDriver
     use: false
     vnc-image:
       enable: false
@@ -34,7 +37,9 @@ browsers:
     versions:
       array: [85.0, 86.0, 87.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0, 96.0]
 
-  opera:
+  -
+    type: opera
+    base-name: OperaDriver
     use: true
     vnc-image:
       enable: false
@@ -64,6 +69,7 @@ aerokube:
 
 ### GGR hosts config
 ggr-hosts:
+  use: true
   -
     ip: 11.11.11.11
 

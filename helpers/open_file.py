@@ -10,14 +10,14 @@ class OpenFile:
         self.allow_yaml_formats = ['yaml', 'yml']
         self.allow_json_formats = ['json']
 
-    def check_file_exist(self):
+    def check_file_exist(self) -> None:
         file_exist = path.isfile(f'{self.file_path}')
         if file_exist:
             self.open_file()
         else:
             raise FileNotFoundError
 
-    def open_file(self):
+    def open_file(self) -> None:
         filename, file_extension = path.splitext(f'{self.file_path}')  # FIX
         if file_extension in self.allow_yaml_formats:
             self.open_yaml_file()

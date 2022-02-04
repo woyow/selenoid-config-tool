@@ -9,7 +9,7 @@ class ChangeRootDir:
 
     ic.disable()  # Disable logs into class
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.script_call_path = sys.argv[0]
         self.absolute_path = os.path.abspath(self.script_call_path)
         self.separator = os.sep
@@ -20,7 +20,7 @@ class ChangeRootDir:
         ic(self.absolute_path)
         ic(self.script_file_name)
 
-    def __call__(self):
+    def __call__(self) -> None:
         self.full_path = self._get_full_root_path()
         if self.full_path:
             self._change_dir()
@@ -30,6 +30,6 @@ class ChangeRootDir:
         ic(full_path)
         return full_path
 
-    def _change_dir(self):
+    def _change_dir(self) -> None:
         os.chdir(self.full_path)
         ic("Root dir has been changed")

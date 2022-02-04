@@ -1,0 +1,82 @@
+type: map
+mapping:
+  browsers2:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          type:
+            type: str
+            required: true
+          base-name:
+            type: str
+            required: true
+          use:
+            type: bool
+            required: true
+          vnc-image:
+            type: map
+            mapping:
+              enable:
+                type: bool
+                required: true
+              versions:
+                type: map
+                required: true
+                mapping:
+                  range:
+                    type: map
+                    mapping:
+                      min:
+                        type: float
+                        required: true
+                      max:
+                        type: float
+                        required: true
+                      ignore:
+                        type: any
+                  array:
+                    type: any
+                  highest:
+                    type: bool
+          default-version:
+            type: map
+            required: true
+            mapping:
+              highest:
+                type: bool
+              custom:
+                type: float
+              minimal:
+                type: bool
+          versions:
+            type: map
+            required: true
+            mapping:
+              range:
+                type: map
+                mapping:
+                  min:
+                    type: float
+                    required: true
+                  max:
+                    type: float
+                    required: true
+                  ignore:
+                    type: any
+              array:
+                type: any
+              latest:
+                type: bool
+
+  aerokube:
+    type: str
+    required: false
+
+  ggr-hosts:
+    type: str
+    required: false
+
+  selenoid-hosts:
+    type: str
+    required: true

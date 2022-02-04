@@ -7,7 +7,7 @@ from helpers.change_root_dir import ChangeRootDir
 from src.configurator import Configurator
 
 
-def init():
+def init() -> None:
     try:
         change_root_dir = ChangeRootDir()
         change_root_dir()  # Change directory to be able to run script in different directories
@@ -17,7 +17,7 @@ def init():
         del change_root_dir
 
 
-def main():
+def main() -> None:
     init()
 
     configurator = Configurator()

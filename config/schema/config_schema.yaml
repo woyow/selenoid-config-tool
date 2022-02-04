@@ -1,6 +1,6 @@
 type: map
 mapping:
-  browsers2:
+  browsers:
     type: seq
     sequence:
       - type: map
@@ -70,13 +70,83 @@ mapping:
                 type: bool
 
   aerokube:
-    type: str
-    required: false
+    type: map
+    required: true
+    mapping:
+      selenoid:
+        type: map
+        required: true
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+      selenoid-ui:
+        type: map
+        required: true
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+      ggr:
+        type: map
+        required: true
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+          encrypt-connection:
+            type: bool
+            required: false
+      ggr-ui:
+        type: map
+        required: true
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
 
   ggr-hosts:
-    type: str
-    required: false
+    type: seq
+    required: False
+    sequence:
+      - type: map
+        mapping:
+          ip:
+            type: any # Change to ip in pykwalify 1.8.0+
+
 
   selenoid-hosts:
-    type: str
+    type: seq
     required: true
+    sequence:
+      - type: map
+        mapping:
+          ip:
+            type: any # Change to ip in pykwalify 1.8.0+
+          domain:
+            type: str
+          port:
+            type: int
+          count:
+            type: int
+          cpu-limit:
+            type: int
+            required: true
+          teams-quota:
+            type: any
+          region-name:
+            type: str
+          vnc:
+            type: str

@@ -28,8 +28,6 @@ class Configurator:
         self.config_validation()
 
     def generate_result(self):
-        print("Generate results")
-        ic(len(self.browsers))
         self._browser_existence_check()
 
     def configurate_browsers(self):
@@ -64,7 +62,7 @@ class Configurator:
 
     def _get_browsers_versions_dict(self) -> dict:
         browsers_versions_in_config = dict(
-            zip(self.list_of_active_browsers, [[] for i in range(len(self.list_of_active_browsers))])
+            zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
 
         for i in range(self.count_of_all_browsers):
@@ -135,13 +133,14 @@ class Configurator:
                 pass
             else:
                 raise Exception(
-                    f'Image "{self.list_of_active_browsers[i]}" not found in aerokube docker registry https://hub.docker.com/u/selenoid'
+                    f'Image "{self.list_of_active_browsers[i]}" not found '
+                    f'in aerokube docker registry https://hub.docker.com/u/selenoid'
                 )
 
     def _browser_version_existence_check(self):
 
         available_browsers_versions_in_registry = dict(
-            zip(self.list_of_active_browsers, [[] for i in range(len(self.list_of_active_browsers))])
+            zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
         ic(available_browsers_versions_in_registry)
 
@@ -162,6 +161,3 @@ class Configurator:
 
             for i in range(response_body['count']):
                 available_browsers_versions_in_registry[browser].append(response_body['results'][i]['name'])
-
-        # ic(available_browsers_versions_in_registry)
-        # ic(self.browsers[0]['versions'])

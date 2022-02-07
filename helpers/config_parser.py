@@ -21,7 +21,7 @@ class ConfigParser(OpenFile):
             parsed_config = self.config_parse()
         else:
             raise Exception
-        ic(type(parsed_config))
+
         return parsed_config
 
     def config_validation(self) -> bool:

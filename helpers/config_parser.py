@@ -14,13 +14,14 @@ class ConfigParser(OpenFile):
         super().__init__(self.file_path)
         self.config_file = self.open_yaml_file()
 
-    def __call__(self) -> None:
+    def __call__(self) -> tuple:
         is_config_valid = self.config_validation()
         ic(is_config_valid)
         if is_config_valid:
             parsed_config = self.config_parse()
         else:
             raise Exception
+        ic(type(parsed_config))
         return parsed_config
 
     def config_validation(self) -> bool:

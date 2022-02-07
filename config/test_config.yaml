@@ -3,7 +3,7 @@ browsers:
   -
     type: chrome
     base-name: ChromeDriver
-    use: false
+    use: true
     vnc-image:
       enable: true # download VNC version of webdriver
       versions:
@@ -23,7 +23,7 @@ browsers:
   -
     type: chrome-mobile
     base-name: ChromeMobileDriver
-    use: false
+    use: true
     default-version:
       highest: true
     versions:
@@ -32,7 +32,7 @@ browsers:
   -
     type: firefox
     base-name: FirefoxDriver
-    use: false
+    use: true
     vnc-image:
       enable: false
       versions:

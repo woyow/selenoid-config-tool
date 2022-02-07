@@ -6,7 +6,7 @@ import json
 
 class Configurator:
 
-    #ic.disable()
+    # ic.disable()
     ic.enable()
 
     def __init__(self):
@@ -18,10 +18,11 @@ class Configurator:
         self.ggr_hosts = self.config[2]
         self.selenoid_hosts = self.config[3]
 
-        # Variables for browsers
+        # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()
         self.list_of_active_browsers = self._get_active_browsers_list()
-        ic(self.config)
+        self.dict_of_active_browsers_versions = self._get_browsers_versions_dict()
+        # ic(self.config)
 
     def __call__(self):
         self.config_validation()
@@ -50,16 +51,59 @@ class Configurator:
     def _get_active_browsers_list(self) -> list:
         browsers = []
 
-        for i in range(self.count_of_browsers):
-            _browser_name = self.browsers[i]['type']
+        for i in range(self.count_of_all_browsers):
+            _browser_object = self.browsers[i]
+            _browser_name = _browser_object['type']
             if self.browsers[i]['use'] is True:
-                ic(self.browsers[i])
-                if 'vnc-image' in self.browsers[i] and self.browsers[i]['vnc-image']['enable']:
+                # ic(self.browsers[i])
+                if 'vnc-image' in _browser_object and _browser_object['vnc-image']['enable']:
                     _browser_name = 'vnc_' + _browser_name
                 browsers.append(_browser_name)
 
         return browsers
 
+    def _get_browsers_versions_dict(self) -> dict:
+        browsers_versions_in_config = dict(
+            zip(self.list_of_active_browsers, [[] for i in range(len(self.list_of_active_browsers))])
+        )
+
+        for i in range(self.count_of_all_browsers):
+            _browser_object = self.browsers[i]
+            _browser_name = _browser_object['type']
+
+            if _browser_object['use']:
+                if 'vnc-image' in _browser_object and _browser_object['vnc-image']['enable']:
+                    _browser_name = 'vnc_' + _browser_name
+
+                _versions = self.browsers[i]['versions']
+
+                if 'range' in _versions:
+                    _min = _versions['range']['min']
+                    _max = _versions['range']['max']
+                    if 'ignore' in _versions['range']:
+                        _ignore = _versions['range']['ignore']
+                    else:
+                        _ignore = None
+
+                    _value = _min
+                    while _value != _max:
+                        if _ignore:
+                            if _value in _ignore:
+                                _value += 1.0
+                                continue
+                        browsers_versions_in_config[_browser_name].append(_value)
+                        _value += 1.0
+
+                elif 'array' in _versions:
+                    _array = _versions['array']
+                    for _value in _array:
+                        browsers_versions_in_config[_browser_name].append(_value)
+
+                elif 'latest' in _versions:
+                    _value = 'latest'
+                    browsers_versions_in_config[_browser_name].append(_value)
+
+        return browsers_versions_in_config
 
     def browser_existence_check(self):
         page_size_default = 25
@@ -74,42 +118,47 @@ class Configurator:
 
         config_browsers_count = len(self.browsers)
         images_count = response_body['count']
-        config_browsers = []
-        available_browsers = []
-
-        for i in range(config_browsers_count):
-            _browser_name = self.browsers[i]['type']
-            if self.browsers[i]['use'] is True:
-                ic(self.browsers[i])
-                if 'vnc-image' in self.browsers[i] and self.browsers[i]['vnc-image']['enable']:
-                    _browser_name = 'vnc_' + _browser_name
-                config_browsers.append(_browser_name)
-            else:
-                config_browsers_count -= 1
+        available_browsers_in_registry = []
 
         for i in range(images_count):
             _browser_name = response_body['results'][i]['name']
-            available_browsers.append(_browser_name)
+            available_browsers_in_registry.append(_browser_name)
 
-        ic(config_browsers)
-        ic(available_browsers)
+        ic(self.list_of_active_browsers)
+        ic(available_browsers_in_registry)
 
-        for i in range(config_browsers_count):
-            if config_browsers[i] in available_browsers:
+        for i in range(len(self.list_of_active_browsers)):
+            if self.list_of_active_browsers[i] in available_browsers_in_registry:
                 pass
             else:
                 raise Exception(
-                    f'Image "{config_browsers[i]}" not found in aerokube docker registry https://hub.docker.com/u/selenoid'
+                    f'Image "{self.list_of_active_browsers[i]}" not found in aerokube docker registry https://hub.docker.com/u/selenoid'
                 )
 
     def browser_version_existence_check(self):
-        page_size_default = 25
-        while True:
-            'https://hub.docker.com/v2/repositories/selenoid/chrome/tags/?page_size=51'
-            response = HttpRequests('hub.docker.com', '/v2/repositories/selenoid/chrome/tags/', f'page_size={page_size_default}')
-            response_body = json.loads(response.text)
-            ic(response_body['count'])
-            if response_body['count'] > page_size_default:
-                page_size_default = response_body['count']
-            else:
-                break
+
+        available_browsers_versions_in_registry = dict(
+            zip(self.list_of_active_browsers, [[] for i in range(len(self.list_of_active_browsers))])
+        )
+        ic(available_browsers_versions_in_registry)
+
+        for browser in self.list_of_active_browsers:
+            page_size_default = 25
+            while True:
+                response = HttpRequests(
+                    'hub.docker.com',
+                    f'/v2/repositories/selenoid/{browser}/tags/',
+                    f'page_size={page_size_default}'
+                ).get()
+                response_body = json.loads(response.text)
+                # ic(response_body['count'])
+                if response_body['count'] > page_size_default:
+                    page_size_default = response_body['count']
+                else:
+                    break
+
+            for i in range(response_body['count']):
+                available_browsers_versions_in_registry[browser].append(response_body['results'][i]['name'])
+
+        # ic(available_browsers_versions_in_registry)
+        # ic(self.browsers[0]['versions'])

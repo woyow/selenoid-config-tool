@@ -30,17 +30,17 @@ class Configurator:
     def generate_result(self):
         print("Generate results")
         ic(len(self.browsers))
-        self.browser_existence_check()
+        self._browser_existence_check()
 
     def configurate_browsers(self):
         pass
 
     def config_validation(self):
-        self.browser_count_check()
-        self.browser_existence_check()
-        self.browser_version_existence_check()
+        self._browser_count_check()
+        self._browser_existence_check()
+        self._browser_version_existence_check()
 
-    def browser_count_check(self):
+    def _browser_count_check(self):
         count = len(self.browsers)
         if count < 1:
             raise Exception('You must use at least one browser in your config')
@@ -105,18 +105,21 @@ class Configurator:
 
         return browsers_versions_in_config
 
-    def browser_existence_check(self):
+    def _browser_existence_check(self):
         page_size_default = 25
         while True:
-            response = HttpRequests('hub.docker.com', '/v2/repositories/selenoid', f'page_size={page_size_default}').get()
+            response = HttpRequests(
+                'hub.docker.com',
+                '/v2/repositories/selenoid',
+                f'page_size={page_size_default}'
+            ).get()
             response_body = json.loads(response.text)
-            ic(response_body['count'])
+
             if response_body['count'] > page_size_default:
                 page_size_default = response_body['count']
             else:
                 break
 
-        config_browsers_count = len(self.browsers)
         images_count = response_body['count']
         available_browsers_in_registry = []
 
@@ -135,7 +138,7 @@ class Configurator:
                     f'Image "{self.list_of_active_browsers[i]}" not found in aerokube docker registry https://hub.docker.com/u/selenoid'
                 )
 
-    def browser_version_existence_check(self):
+    def _browser_version_existence_check(self):
 
         available_browsers_versions_in_registry = dict(
             zip(self.list_of_active_browsers, [[] for i in range(len(self.list_of_active_browsers))])
@@ -151,7 +154,7 @@ class Configurator:
                     f'page_size={page_size_default}'
                 ).get()
                 response_body = json.loads(response.text)
-                # ic(response_body['count'])
+
                 if response_body['count'] > page_size_default:
                     page_size_default = response_body['count']
                 else:

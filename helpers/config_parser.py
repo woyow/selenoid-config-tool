@@ -5,8 +5,8 @@ from icecream import ic
 
 class ConfigParser(OpenFile):
 
-    #ic.disable()
-    ic.enable()
+    ic.disable()
+    # ic.enable()
 
     def __init__(self) -> None:
         self.file_path = './config/test_config.yaml'
@@ -16,7 +16,7 @@ class ConfigParser(OpenFile):
 
     def __call__(self) -> tuple:
         is_config_valid = self.config_validation()
-        ic(is_config_valid)
+        # ic(is_config_valid)
         if is_config_valid:
             parsed_config = self.config_parse()
         else:
@@ -35,10 +35,10 @@ class ConfigParser(OpenFile):
         ggr_hosts = self.parse_ggr_hosts()
         selenoid_hosts = self.parse_selenoid_hosts()
 
-        ic(browsers)
-        ic(aerokube)
-        ic(ggr_hosts)
-        ic(selenoid_hosts)
+        # ic(browsers)
+        # ic(aerokube)
+        # ic(ggr_hosts)
+        # ic(selenoid_hosts)
         return browsers, aerokube, ggr_hosts, selenoid_hosts
 
     def parse_browsers(self):

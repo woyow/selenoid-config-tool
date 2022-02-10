@@ -16,9 +16,9 @@ class ChangeRootDir:
         self.script_file_name = self.absolute_path.split(self.separator)[-1]
         self.script_file_name_length = len(self.script_file_name)
 
-        ic(self.script_call_path)
-        ic(self.absolute_path)
-        ic(self.script_file_name)
+        # ic(self.script_call_path)
+        # ic(self.absolute_path)
+        # ic(self.script_file_name)
 
     def __call__(self) -> None:
         self.full_path = self._get_full_root_path()
@@ -27,9 +27,9 @@ class ChangeRootDir:
 
     def _get_full_root_path(self) -> str:
         full_path = self.absolute_path[:-self.script_file_name_length]
-        ic(full_path)
+        # ic(full_path)
         return full_path
 
     def _change_dir(self) -> None:
         os.chdir(self.full_path)
-        ic("Root dir has been changed")
+        # ic("Root dir has been changed")

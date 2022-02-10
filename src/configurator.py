@@ -4,6 +4,70 @@ from icecream import ic
 import json
 
 
+def _range_handler(versions, target_array):
+    min_version = versions['range']['min']
+    max_version = versions['range']['max']
+    if 'ignore' in versions['range']:
+        ignore = versions['range']['ignore']
+    else:
+        ignore = None
+
+    value = min_version
+    while value != max_version:
+        if ignore:
+            if value in ignore:
+                value += 1.0
+                continue
+        target_array.append(value)
+        value += 1.0
+
+
+def _array_handler(versions, target_array):
+    array = versions['array']
+    for value in array:
+        target_array.append(value)
+
+
+def _latest_handler(target_array):
+    value = 'latest'
+    target_array.append(value)
+
+
+def _highest_handler(source_array, target_array):
+    value = source_array[-1]
+    target_array.append(value)
+
+
+def _validation_boundary_conditions(browser_name, source_array, target_array):
+    """
+    source_array - vnc_browsers
+    target_array - browsers
+    """
+    min_a = min(source_array)
+    min_b = min(target_array)
+    max_a = max(source_array)
+    max_b = max(target_array)
+
+    if min_a < min_b:
+        raise Exception(
+            f'VNC version less then browser version; '
+            f'vnc_{browser_name} version: {min_a}; {browser_name} version: {min_b}!!!'
+        )
+    if max(source_array) > max(target_array):
+        raise Exception(
+            f'VNC version is greater then browser version; '
+            f'vnc_{browser_name} version: {max_a}; {browser_name} version: {max_b}!!!'
+        )
+
+
+def _remove_same_values_from_array(source_array, target_array):
+    for version in source_array:
+        try:
+            target_array.remove(version)
+        except ValueError:
+            continue
+
+
 class Configurator:
 
     # ic.disable()
@@ -37,6 +101,7 @@ class Configurator:
     def config_validation(self):
         self._browser_count_check()
         self._browser_existence_check()
+        self._browser_config_versions_check()
         self._browser_version_existence_check()
 
     def _browser_count_check(self):
@@ -63,6 +128,7 @@ class Configurator:
         return browsers
 
     def _get_browsers_versions_dict(self) -> dict:
+
         browsers_versions_in_config = dict(
             zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
@@ -85,36 +151,47 @@ class Configurator:
                 versions = self.browsers[i]['versions']
 
                 if 'range' in versions:
-                    _min = versions['range']['min']
-                    _max = versions['range']['max']
-                    if 'ignore' in versions['range']:
-                        _ignore = versions['range']['ignore']
-                    else:
-                        _ignore = None
-
-                    _value = _min
-                    while _value != _max:
-                        if _ignore:
-                            if _value in _ignore:
-                                _value += 1.0
-                                continue
-                        browsers_versions_in_config[browser_name].append(_value)
-                        _value += 1.0
+                    _range_handler(versions, browsers_versions_in_config[browser_name])
 
                 elif 'array' in versions:
-                    _array = versions['array']
-                    for _value in _array:
-                        browsers_versions_in_config[browser_name].append(_value)
+                    _array_handler(versions, browsers_versions_in_config[browser_name])
 
                 elif 'latest' in versions:
-                    _value = 'latest'
-                    browsers_versions_in_config[browser_name].append(_value)
+                    _latest_handler(browsers_versions_in_config[browser_name])
 
-                elif 'highest' in vnc_versions:
-                    _value = 'highest'
-                    ic(browsers_versions_in_config[browser_name][-1])
+                if vnc:
+                    if 'range' in vnc_versions:
+                        _range_handler(vnc_versions, browsers_versions_in_config[vnc_browser_name])
+
+                    elif 'array' in vnc_versions:
+                        _array_handler(vnc_versions, browsers_versions_in_config[vnc_browser_name])
+
+                    elif 'latest' in vnc_versions:
+                        _latest_handler(browsers_versions_in_config[vnc_browser_name])
+
+                    elif 'highest' in vnc_versions:
+                        _highest_handler(
+                            browsers_versions_in_config[browser_name],
+                            browsers_versions_in_config[vnc_browser_name]
+                        )
+
+                    _validation_boundary_conditions(
+                        browser_name,
+                        browsers_versions_in_config[vnc_browser_name],
+                        browsers_versions_in_config[browser_name]
+                    )
+
+                    _remove_same_values_from_array(
+                        browsers_versions_in_config[vnc_browser_name],
+                        browsers_versions_in_config[browser_name]
+                    )
 
         return browsers_versions_in_config
+
+    def _browser_config_versions_check(self):
+        for browser in self.list_of_active_browsers:
+            if browser[:3] == 'vnc':
+                self.dict_of_active_browsers_versions[browser]
 
     def _browser_existence_check(self):
         page_size_default = 25

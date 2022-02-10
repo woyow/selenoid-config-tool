@@ -40,8 +40,9 @@ def _highest_handler(source_array, target_array):
 
 def _validation_boundary_conditions(browser_name, source_array, target_array):
     """
-    source_array - vnc_browsers
-    target_array - browsers
+    browser_name - basic browser name
+    source_array - array with vnc_browsers
+    target_array - array with browsers
     """
     min_a = min(source_array)
     min_b = min(target_array)
@@ -50,13 +51,13 @@ def _validation_boundary_conditions(browser_name, source_array, target_array):
 
     if min_a < min_b:
         raise Exception(
-            f'VNC version less then browser version; '
-            f'vnc_{browser_name} version: {min_a}; {browser_name} version: {min_b}!!!'
+            'VNC version less then browser version; '
+            f'vnc_{browser_name} version: {min_a}; {browser_name} version: {min_b}!'
         )
     if max(source_array) > max(target_array):
         raise Exception(
-            f'VNC version is greater then browser version; '
-            f'vnc_{browser_name} version: {max_a}; {browser_name} version: {max_b}!!!'
+            'VNC version is greater then browser version; '
+            f'vnc_{browser_name} version: {max_a}; {browser_name} version: {max_b}!'
         )
 
 
@@ -100,8 +101,8 @@ class Configurator:
 
     def config_validation(self):
         self._browser_count_check()
-        self._browser_existence_check()
-        self._browser_version_existence_check()
+        self._browser_existence_in_registry_check()
+        self._browser_version_existence_in_registry_check()
 
     def _browser_count_check(self):
         count = len(self.browsers)
@@ -187,7 +188,7 @@ class Configurator:
 
         return browsers_versions_in_config
 
-    def _browser_existence_check(self):
+    def _browser_existence_in_registry_check(self):
         page_size_default = 25
         while True:
             response = HttpRequests(
@@ -221,12 +222,11 @@ class Configurator:
                     f'in aerokube docker registry https://hub.docker.com/u/selenoid'
                 )
 
-    def _browser_version_existence_check(self):
+    def _browser_version_existence_in_registry_check(self):
 
         available_browsers_versions_in_registry = dict(
             zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
-        ic(available_browsers_versions_in_registry)
 
         for browser in self.list_of_active_browsers:
             page_size_default = 25
@@ -245,3 +245,5 @@ class Configurator:
 
             for i in range(response_body['count']):
                 available_browsers_versions_in_registry[browser].append(response_body['results'][i]['name'])
+
+        ic(available_browsers_versions_in_registry)

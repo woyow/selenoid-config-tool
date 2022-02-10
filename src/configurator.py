@@ -101,7 +101,6 @@ class Configurator:
     def config_validation(self):
         self._browser_count_check()
         self._browser_existence_check()
-        self._browser_config_versions_check()
         self._browser_version_existence_check()
 
     def _browser_count_check(self):
@@ -187,11 +186,6 @@ class Configurator:
                     )
 
         return browsers_versions_in_config
-
-    def _browser_config_versions_check(self):
-        for browser in self.list_of_active_browsers:
-            if browser[:3] == 'vnc':
-                self.dict_of_active_browsers_versions[browser]
 
     def _browser_existence_check(self):
         page_size_default = 25

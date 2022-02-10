@@ -34,7 +34,7 @@ browsers:
     base-name: FirefoxDriver
     use: true
     vnc-image:
-      enable: false
+      enable: true
       versions:
         array: [90.0, 91.0, 96.0]
     default-version:

@@ -22,6 +22,7 @@ class Configurator:
         self.count_of_all_browsers = self._get_count_of_all_browsers()
         self.list_of_active_browsers = self._get_active_browsers_list()
         self.dict_of_active_browsers_versions = self._get_browsers_versions_dict()
+        ic(self.dict_of_active_browsers_versions)
         # ic(self.config)
 
     def __call__(self):
@@ -50,13 +51,14 @@ class Configurator:
         browsers = []
 
         for i in range(self.count_of_all_browsers):
-            _browser_object = self.browsers[i]
-            _browser_name = _browser_object['type']
+            browser_object = self.browsers[i]
+            browser_name = browser_object['type']
             if self.browsers[i]['use'] is True:
                 # ic(self.browsers[i])
-                if 'vnc-image' in _browser_object and _browser_object['vnc-image']['enable']:
-                    _browser_name = 'vnc_' + _browser_name
-                browsers.append(_browser_name)
+                if 'vnc-image' in browser_object and browser_object['vnc-image']['enable']:
+                    vnc_browser_name = 'vnc_' + browser_name
+                    browsers.append(vnc_browser_name)
+                browsers.append(browser_name)
 
         return browsers
 
@@ -66,20 +68,27 @@ class Configurator:
         )
 
         for i in range(self.count_of_all_browsers):
-            _browser_object = self.browsers[i]
-            _browser_name = _browser_object['type']
+            browser_object = self.browsers[i]
+            browser_name = browser_object['type']
 
-            if _browser_object['use']:
-                if 'vnc-image' in _browser_object and _browser_object['vnc-image']['enable']:
-                    _browser_name = 'vnc_' + _browser_name
+            if browser_object['use']:
+                if 'vnc-image' in browser_object and browser_object['vnc-image']['enable']:
+                    vnc = True
+                    vnc_browser_name = 'vnc_' + browser_name
+                    vnc_versions = self.browsers[i]['vnc-image']['versions']
+                    ic(vnc_versions)
+                else:
+                    vnc = None
+                    vnc_browser_name = None
+                    vnc_versions = None
 
-                _versions = self.browsers[i]['versions']
+                versions = self.browsers[i]['versions']
 
-                if 'range' in _versions:
-                    _min = _versions['range']['min']
-                    _max = _versions['range']['max']
-                    if 'ignore' in _versions['range']:
-                        _ignore = _versions['range']['ignore']
+                if 'range' in versions:
+                    _min = versions['range']['min']
+                    _max = versions['range']['max']
+                    if 'ignore' in versions['range']:
+                        _ignore = versions['range']['ignore']
                     else:
                         _ignore = None
 
@@ -89,17 +98,21 @@ class Configurator:
                             if _value in _ignore:
                                 _value += 1.0
                                 continue
-                        browsers_versions_in_config[_browser_name].append(_value)
+                        browsers_versions_in_config[browser_name].append(_value)
                         _value += 1.0
 
-                elif 'array' in _versions:
-                    _array = _versions['array']
+                elif 'array' in versions:
+                    _array = versions['array']
                     for _value in _array:
-                        browsers_versions_in_config[_browser_name].append(_value)
+                        browsers_versions_in_config[browser_name].append(_value)
 
-                elif 'latest' in _versions:
+                elif 'latest' in versions:
                     _value = 'latest'
-                    browsers_versions_in_config[_browser_name].append(_value)
+                    browsers_versions_in_config[browser_name].append(_value)
+
+                elif 'highest' in vnc_versions:
+                    _value = 'highest'
+                    ic(browsers_versions_in_config[browser_name][-1])
 
         return browsers_versions_in_config
 

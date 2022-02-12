@@ -41,7 +41,7 @@ mapping:
                         type: float
                         required: true
                       max:
-                        type: float
+                        type: any
                         required: true
                       ignore:
                         type: any
@@ -70,7 +70,7 @@ mapping:
                     type: float
                     required: true
                   max:
-                    type: float
+                    type: any
                     required: true
                   ignore:
                     type: any

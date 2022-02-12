@@ -9,14 +9,18 @@ browsers:
       default-version:
         highest: true
       versions:
-        highest: true # highest (highest browser version); array with browser versions [97.0]
+        #highest: true # highest (highest browser version); array with browser versions [97.0]
+        range:
+          min: 90.0
+          max: latest
+          ignore: [82.0]
     default-version:
       highest: true # highest or custom default browser version (97.0)
     versions: # from min and to max in steps of 1
       range:
-        min: 85.0
-        max: 97.0
-        ignore: [87.0]
+        min: 80.0
+        max: 98.0
+        ignore: [82.0]
       #capabilities:
       #  vnc_enabled: True
       #  video_enabled: False

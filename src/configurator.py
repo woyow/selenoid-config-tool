@@ -35,16 +35,23 @@ def _docker_hub_get_request(
     return response_body
 
 
-def _range_handler(versions: dict, target_array: list):
+def _range_handler(browser_name: str, versions: dict, target_array: list):
     min_version = versions['range']['min']
     max_version = versions['range']['max']
+    # ic(min_version)
+    # ic(max_version)
+
+    if max_version == 'latest':
+        max_version = _latest_handler(browser_name, target_array, return_value=True)
+        # ic(max_version)
+
     if 'ignore' in versions['range']:
         ignore = versions['range']['ignore']
     else:
         ignore = None
 
     value = min_version
-    while value != max_version:
+    while value <= max_version:
         if ignore:
             if value in ignore:
                 value += 1.0
@@ -64,7 +71,7 @@ def _array_handler(browser_name: str, versions: dict, target_array: list):
     target_array = list(set(target_array))
 
 
-def _latest_handler(browser_name: str, target_array: list):
+def _latest_handler(browser_name: str, target_array: list, return_value: bool = None):
     page_size_default = 2
     response_body = _docker_hub_get_request(
         'hub.docker.com',
@@ -82,7 +89,11 @@ def _latest_handler(browser_name: str, target_array: list):
     else:
         value = results[0]['name']
     ic(browser_name, value, "latest_handler")
-    target_array.append(float(value))
+
+    if return_value:
+        return float(value)
+    else:
+        target_array.append(float(value))
 
 
 def _highest_handler(source_array: list, target_array: list):
@@ -97,12 +108,6 @@ def _validation_boundary_conditions(browser_name: str, source_array: list, targe
     target_array - array with browsers
     """
 
-    # ic(browser_name)
-    # ic(target_array)
-    # ic(source_array)
-
-    # ic(len(source_array))
-    # ic(len(target_array))
     min_a = min(source_array)
     min_b = min(target_array)
     max_a = max(source_array)
@@ -223,7 +228,7 @@ class Configurator:
                 versions = self.browsers[i]['versions']
 
                 if 'range' in versions:
-                    _range_handler(versions, browsers_versions_in_config[browser_name])
+                    _range_handler(browser_name, versions, browsers_versions_in_config[browser_name])
 
                 elif 'array' in versions:
                     _array_handler(browser_name, versions, browsers_versions_in_config[browser_name])
@@ -233,7 +238,7 @@ class Configurator:
 
                 if vnc:
                     if 'range' in vnc_versions:
-                        _range_handler(vnc_versions, browsers_versions_in_config[vnc_browser_name])
+                        _range_handler(vnc_browser_name, vnc_versions, browsers_versions_in_config[vnc_browser_name])
 
                     elif 'array' in vnc_versions:
                         _array_handler(browser_name, vnc_versions, browsers_versions_in_config[vnc_browser_name])
@@ -283,10 +288,10 @@ class Configurator:
                 vnc_only = True
                 default_browser_version_in_config.pop(browser_name)
 
-            ic(self.dict_of_active_browsers_versions)
+            # ic(self.dict_of_active_browsers_versions)
             if not vnc_only:
                 versions_list = self.dict_of_active_browsers_versions[browser_name]
-                ic(versions_list)
+                # ic(versions_list)
 
                 if 'custom' in default_version_object:
                     value = default_version_object['custom']
@@ -299,7 +304,7 @@ class Configurator:
 
             if vnc:
                 vnc_versions_list = self.dict_of_active_browsers_versions[vnc_browser_name]
-                ic(vnc_versions_list)
+                # ic(vnc_versions_list)
 
                 if 'custom' in vnc_default_version_object:
                     value = vnc_default_version_object['custom']
@@ -356,7 +361,7 @@ class Configurator:
             zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
 
-        for browser in self.list_of_active_browsers:
+        for browser in self.dict_of_active_browsers_versions:
             page_size_default = 25
             response_body = _docker_hub_get_request(
                 'hub.docker.com',

@@ -1,4 +1,16 @@
 import requests
+import requests_cache
+
+from datetime import timedelta
+
+# Cache all http requests
+requests_cache.install_cache(
+	'selenoid_config_tool_requests_cache',
+	use_cache_dir=True,
+	cache_control=True,
+	expire_after=timedelta(days=1),
+	allowable_codes=[200]
+)
 
 
 class HttpRequests:

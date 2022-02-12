@@ -155,6 +155,19 @@ def _get_vnc_params(browser, browser_name) -> (bool, str, dict, dict) or (None, 
     return vnc, vnc_browser_name, vnc_versions, vnc_default_version_object
 
 
+def _string_sanitize(string: str) -> str:
+    banned_symbols = [
+        '\r', '\n', '\t', '\\', '/', ' ', '<', '>', ';', ':', "'", '"',
+        '[', ']', '|', '{', '}', '(', ')', '*', '&', '^', '%', '$', '#',
+        '@', '!', '`', '~', ',', '.'
+    ]
+
+    for symbol in banned_symbols:
+        string = string.replace(symbol, '')
+
+    return string
+
+
 class Configurator:
 
     # ic.disable()
@@ -172,11 +185,13 @@ class Configurator:
         # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()
         self.list_of_active_browsers = self._get_active_browsers_list()
-        self.dict_of_active_browsers_versions = self._get_browsers_versions_dict()
-        self.dict_of_default_browser_version = self._get_default_browser_version_dict()
-        self.dict_of_base_names_browsers = self._get_base_names_browsers_dict()
-        ic(self.dict_of_active_browsers_versions)
-        ic(self.dict_of_default_browser_version)
+
+        self.browsers_dict = self._get_default_browsers_dict()
+        self._set_browsers_versions()
+        self._set_default_browsers_version()
+        self._set_browsers_base_name()
+        ic(self.browsers_dict)
+
         # ic(self.config)
 
     def __call__(self):
@@ -216,11 +231,25 @@ class Configurator:
 
         return browsers
 
-    def _get_browsers_versions_dict(self) -> dict:
+    def _get_default_browsers_dict(self):
 
-        browsers_versions_in_config = dict(
-            zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
+        length = len(self.list_of_active_browsers)
+        browsers_dict = dict(
+            zip(
+                self.list_of_active_browsers,
+                [
+                    {
+                        'default-version': None,
+                        'versions': [],
+                        'base-name': None
+                    } for _ in range(length)
+                ]
+            )
         )
+        ic(browsers_dict)
+        return browsers_dict
+
+    def _set_browsers_versions(self) -> None:
 
         for i in range(self.count_of_all_browsers):
             browser_object = self.browsers[i]
@@ -232,51 +261,45 @@ class Configurator:
                 versions = self.browsers[i]['versions']
 
                 if 'range' in versions:
-                    _range_handler(browser_name, versions, browsers_versions_in_config[browser_name])
+                    _range_handler(browser_name, versions, self.browsers_dict[browser_name]['versions'])
 
                 elif 'array' in versions:
-                    _array_handler(browser_name, versions, browsers_versions_in_config[browser_name])
+                    _array_handler(browser_name, versions, self.browsers_dict[browser_name]['versions'])
 
                 elif 'latest' in versions:
-                    _latest_handler(browser_name, browsers_versions_in_config[browser_name])
+                    _latest_handler(browser_name, self.browsers_dict[browser_name]['versions'])
 
                 if vnc:
                     if 'range' in vnc_versions:
-                        _range_handler(vnc_browser_name, vnc_versions, browsers_versions_in_config[vnc_browser_name])
+                        _range_handler(vnc_browser_name, vnc_versions, self.browsers_dict[vnc_browser_name]['versions'])
 
                     elif 'array' in vnc_versions:
-                        _array_handler(browser_name, vnc_versions, browsers_versions_in_config[vnc_browser_name])
+                        _array_handler(browser_name, vnc_versions, self.browsers_dict[vnc_browser_name]['versions'])
 
                     elif 'latest' in vnc_versions:
-                        _latest_handler(vnc_browser_name, browsers_versions_in_config[vnc_browser_name])
+                        _latest_handler(vnc_browser_name, self.browsers_dict[vnc_browser_name]['versions'])
 
                     elif 'highest' in vnc_versions:
                         _highest_handler(
-                            browsers_versions_in_config[browser_name],
-                            browsers_versions_in_config[vnc_browser_name]
+                            self.browsers_dict[browser_name]['versions'],
+                            self.browsers_dict[vnc_browser_name]['versions']
                         )
 
                     _validation_boundary_conditions(
                         browser_name,
-                        browsers_versions_in_config[vnc_browser_name],
-                        browsers_versions_in_config[browser_name]
+                        self.browsers_dict[vnc_browser_name]['versions'],
+                        self.browsers_dict[browser_name]['versions']
                     )
 
                     _remove_same_values_from_array(
-                        browsers_versions_in_config[vnc_browser_name],
-                        browsers_versions_in_config[browser_name]
+                        self.browsers_dict[vnc_browser_name]['versions'],
+                        self.browsers_dict[browser_name]['versions']
                     )
 
-                    if len(browsers_versions_in_config[browser_name]) < 1:
-                        browsers_versions_in_config.pop(browser_name)
+                    if len(self.browsers_dict[browser_name]['versions']) < 1:
+                        self.browsers_dict.pop(browser_name)
 
-        return browsers_versions_in_config
-
-    def _get_default_browser_version_dict(self) -> dict:
-
-        default_browser_version_in_config = dict(
-            zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
-        )
+    def _set_default_browsers_version(self) -> None:
 
         for i in range(len(self.browsers)):
             browser_object = self.browsers[i]
@@ -286,15 +309,13 @@ class Configurator:
             )
             default_version_object = browser_object['default-version']
 
-            if browser_name in self.dict_of_active_browsers_versions:
+            if browser_name in self.browsers_dict:
                 vnc_only = None
             else:
                 vnc_only = True
-                default_browser_version_in_config.pop(browser_name)
 
-            # ic(self.dict_of_active_browsers_versions)
             if not vnc_only:
-                versions_list = self.dict_of_active_browsers_versions[browser_name]
+                versions_list = self.browsers_dict[browser_name]['versions']
                 # ic(versions_list)
 
                 if 'custom' in default_version_object:
@@ -304,10 +325,10 @@ class Configurator:
                 elif 'minimal' in default_version_object:
                     value = min(versions_list)
 
-                default_browser_version_in_config[browser_name].append(value)
+                self.browsers_dict[browser_name]['default-version'] = value
 
             if vnc:
-                vnc_versions_list = self.dict_of_active_browsers_versions[vnc_browser_name]
+                vnc_versions_list = self.browsers_dict[vnc_browser_name]['versions']
                 # ic(vnc_versions_list)
 
                 if 'custom' in vnc_default_version_object:
@@ -317,9 +338,7 @@ class Configurator:
                 elif 'minimal' in vnc_default_version_object:
                     value = min(vnc_versions_list)
 
-                default_browser_version_in_config[vnc_browser_name].append(value)
-
-        return default_browser_version_in_config
+                self.browsers_dict[vnc_browser_name]['default-version'] = value
 
     def _browser_existence_in_registry_check(self):
         page_size_default = 25
@@ -381,13 +400,27 @@ class Configurator:
                     )
         # ic(available_browsers_versions_in_registry)
 
-    def _get_base_names_browsers_dict(self) -> dict:
+    def _set_browsers_base_name(self) -> None:
 
-        base_names_browsers_in_config = dict(
-            zip(self.list_of_active_browsers, ['' for _ in range(len(self.list_of_active_browsers))])
-        )
-        ic(base_names_browsers_in_config)
-        for browser in self.dict_of_active_browsers_versions:
-            ic(browser)
+        for i in range(len(self.browsers)):
+            browser_object = self.browsers[i]
+            browser_name = browser_object['type']
+            vnc, vnc_browser_name, vnc_versions, vnc_default_version_object = _get_vnc_params(
+                browser_object, browser_name
+            )
+            browser_base_name = browser_object['base-name']
+            ic(browser_base_name)
 
-        return base_names_browsers_in_config
+            if browser_name in self.browsers_dict:
+                vnc_only = None
+            else:
+                vnc_only = True
+
+            if not vnc_only:
+                value = _string_sanitize(browser_base_name)
+
+                self.browsers_dict[browser_name]['base-name'] = value
+
+            if vnc:
+                value = 'VNC_' + _string_sanitize(browser_base_name)
+                self.browsers_dict[vnc_browser_name]['base-name'] = value

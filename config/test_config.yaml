@@ -6,6 +6,8 @@ browsers:
     use: true
     vnc-image:
       enable: true # download VNC version of webdriver
+      default-version:
+        highest: true
       versions:
         highest: true # highest (highest browser version); array with browser versions [97.0]
     default-version:
@@ -35,19 +37,23 @@ browsers:
     use: true
     vnc-image:
       enable: true
+      default-version:
+        highest: true
       versions:
         array: [90.0, 91.0, 96.0]
     default-version:
       custom: 92.0 # highest or custom default browser version (96.0)
     versions:
-      array: [85.0, 86.0, 87.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0, 96.0]
+      array: [85.0, 86.0, 87.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0, 96.0, latest]
 
   -
     type: opera
     base-name: OperaDriver
     use: true
     vnc-image:
-      enable: false
+      enable: true
+      default-version:
+        highest: true
       versions:
         highest: true
     default-version:

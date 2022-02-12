@@ -3,22 +3,39 @@ import requests
 
 class HttpRequests:
 
-	def __init__(self, api_endpoint, api_method=None, request_params=None, headers=None, body=None, secure=None):
-		if secure is not False:
-			self.protocol = 'https'
-		else:
+	def __init__(
+			self,
+			api_endpoint: str,
+			api_method: str = None,
+			request_params: dict = None,
+			headers: dict = None,
+			body: dict = None,
+			secure: bool = None
+	):
+		if secure is False:
 			self.protocol = 'http'
+		else:
+			self.protocol = 'https'
 		self.api_endpoint = api_endpoint
 		self.api_method = api_method
 		self.request_params = request_params
 		self.headers = headers
 		self.body = body
+
 		if api_method is None:
 			self.url = self.protocol + '://' + self.api_endpoint
 		else:
 			self.url = self.protocol + '://' + self.api_endpoint + self.api_method
+
 		if request_params is not None:
-			self.url = self.url + '?' + self.request_params
+			self.url = self.url + '?'
+			param_count = len(self.request_params)
+			for key in self.request_params:
+				self.url += key + '=' + str(self.request_params[key])
+				param_count -= 1
+				if param_count > 0:
+					self.url += '&'
+
 		self.requests_session = requests.session()
 
 	def get(self):

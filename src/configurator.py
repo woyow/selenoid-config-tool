@@ -204,7 +204,11 @@ class Configurator:
         self._set_browsers_base_name()
         ic(self.browsers_dict)
 
-        # ic(self.config)
+        # Variables for aerokube from config
+        self.aerokube_dict = self._get_default_aerokube_dict()
+        self._set_aerokube_images_version()
+        self._set_aerokube_host_ports()
+        ic(self.aerokube_dict)
 
     def __call__(self):
         self.config_validation()
@@ -433,3 +437,41 @@ class Configurator:
             if vnc:
                 value = 'VNC_' + _string_sanitize(browser_base_name)
                 self.browsers_dict[vnc_browser_name]['base-name'] = value
+
+    def _get_default_aerokube_dict(self) -> dict:
+
+        aerokube_dict = {
+            'selenoid': {
+                'image-version': None,
+                'host-port': None
+            },
+            'selenoid-ui': {
+                'image-version': None,
+                'host-port': None
+            },
+            'ggr': {
+                'image-version': None,
+                'host-port': None,
+                'encrypt-connection': None
+            },
+            'ggr-ui': {
+                'image-version': None,
+                'host-port': None
+            }
+        }
+
+        return aerokube_dict
+
+    def _set_aerokube_images_version(self):
+        """ TODO: validations for versions """
+
+        for image_name in self.aerokube_dict:
+            value = self.aerokube[image_name]['image-version']
+            self.aerokube_dict[image_name]['image-version'] = value
+
+    def _set_aerokube_host_ports(self):
+
+        for image_name in self.aerokube_dict:
+            value = self.aerokube[image_name]['host-port']
+            if 0 < value < 65535:
+                self.aerokube_dict[image_name]['host-port'] = value

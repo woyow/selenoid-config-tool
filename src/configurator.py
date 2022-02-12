@@ -68,7 +68,10 @@ def _array_handler(browser_name: str, versions: dict, target_array: list):
         else:
             target_array.append(value)
 
-    target_array = list(set(target_array))
+    array_without_same_values = list(set(target_array))  # CASE: latest_version=100, array: [100, latest]
+    target_array.clear()
+    target_array.extend(array_without_same_values)
+
 
 
 def _latest_handler(browser_name: str, target_array: list, return_value: bool = None):
@@ -171,6 +174,7 @@ class Configurator:
         self.list_of_active_browsers = self._get_active_browsers_list()
         self.dict_of_active_browsers_versions = self._get_browsers_versions_dict()
         self.dict_of_default_browser_version = self._get_default_browser_version_dict()
+        self.dict_of_base_names_browsers = self._get_base_names_browsers_dict()
         ic(self.dict_of_active_browsers_versions)
         ic(self.dict_of_default_browser_version)
         # ic(self.config)
@@ -179,7 +183,7 @@ class Configurator:
         self.config_validation()
 
     def generate_result(self):
-        self._browser_existence_check()
+        pass
 
     def configurate_browsers(self):
         pass
@@ -296,9 +300,9 @@ class Configurator:
                 if 'custom' in default_version_object:
                     value = default_version_object['custom']
                 elif 'highest' in default_version_object:
-                    value = max(self.dict_of_active_browsers_versions[browser_name])
+                    value = max(versions_list)
                 elif 'minimal' in default_version_object:
-                    value = min(self.dict_of_active_browsers_versions[browser_name])
+                    value = min(versions_list)
 
                 default_browser_version_in_config[browser_name].append(value)
 
@@ -309,9 +313,9 @@ class Configurator:
                 if 'custom' in vnc_default_version_object:
                     value = vnc_default_version_object['custom']
                 elif 'highest' in vnc_default_version_object:
-                    value = max(self.dict_of_active_browsers_versions[vnc_browser_name])
+                    value = max(vnc_versions_list)
                 elif 'minimal' in vnc_default_version_object:
-                    value = min(self.dict_of_active_browsers_versions[vnc_browser_name])
+                    value = min(vnc_versions_list)
 
                 default_browser_version_in_config[vnc_browser_name].append(value)
 
@@ -332,8 +336,8 @@ class Configurator:
             _browser_name = response_body['results'][i]['name']
             available_browsers_in_registry.append(_browser_name)
 
-        #ic(self.list_of_active_browsers)
-        #ic(available_browsers_in_registry)
+        # ic(self.list_of_active_browsers)
+        # ic(available_browsers_in_registry)
 
         for i in range(len(self.list_of_active_browsers)):
             if self.list_of_active_browsers[i] in available_browsers_in_registry:
@@ -343,17 +347,6 @@ class Configurator:
                     f'Image "{self.list_of_active_browsers[i]}" not found '
                     f'in aerokube docker registry https://hub.docker.com/u/selenoid'
                 )
-
-    def _docker_hub_request(*request_payload):
-        ic(request_payload)
-        while True:
-            response = HttpRequests(request_payload).get()
-            response_body = json.loads(response.text)
-
-            if response_body['count'] > page_size_default:
-                page_size_default = response_body['count']
-            else:
-                break
 
     def _browser_version_existence_in_registry_check(self):
 
@@ -374,7 +367,7 @@ class Configurator:
 
             # ic(available_browsers_versions_in_registry[browser])
 
-            temp_versions_list = self.dict_of_active_browsers_versions[browser] #  TODO: exclude vnc_only browser
+            temp_versions_list = self.dict_of_active_browsers_versions[browser]
             # ic(temp_versions_list)
             # ic(type(temp_versions_list))
             for i in range(len(temp_versions_list)):
@@ -386,4 +379,15 @@ class Configurator:
                         f'{browser}:{temp_versions_list[i]} not found into selenoid docker registry. '
                         f'Available versions: {available_browsers_versions_in_registry[browser]}'
                     )
-        #ic(available_browsers_versions_in_registry)
+        # ic(available_browsers_versions_in_registry)
+
+    def _get_base_names_browsers_dict(self) -> dict:
+
+        base_names_browsers_in_config = dict(
+            zip(self.list_of_active_browsers, ['' for _ in range(len(self.list_of_active_browsers))])
+        )
+        ic(base_names_browsers_in_config)
+        for browser in self.dict_of_active_browsers_versions:
+            ic(browser)
+
+        return base_names_browsers_in_config

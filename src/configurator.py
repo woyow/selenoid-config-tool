@@ -13,6 +13,8 @@ def _docker_hub_get_request(
         secure: bool = None,
         check_count: bool = None
 ):
+    """ Wrapper for convenient queries to the docker registry """
+
     while True:
         response = HttpRequests(
             domain,
@@ -36,6 +38,7 @@ def _docker_hub_get_request(
 
 
 def _range_handler(browser_name: str, versions: dict, target_array: list):
+    """ 'range' key handler from config """
     min_version = versions['range']['min']
     max_version = versions['range']['max']
     # ic(min_version)
@@ -61,6 +64,7 @@ def _range_handler(browser_name: str, versions: dict, target_array: list):
 
 
 def _array_handler(browser_name: str, versions: dict, target_array: list):
+    """ 'array' key handler from config """
     array = versions['array']
     for value in array:
         if value == 'latest':
@@ -73,8 +77,8 @@ def _array_handler(browser_name: str, versions: dict, target_array: list):
     target_array.extend(array_without_same_values)
 
 
-
-def _latest_handler(browser_name: str, target_array: list, return_value: bool = None):
+def _latest_handler(browser_name: str, target_array: list, return_value: bool = None) -> float or None:
+    """ 'latest' key handler from config """
     page_size_default = 2
     response_body = _docker_hub_get_request(
         'hub.docker.com',
@@ -91,7 +95,7 @@ def _latest_handler(browser_name: str, target_array: list, return_value: bool = 
             value = results[0]['name']
     else:
         value = results[0]['name']
-    ic(browser_name, value, "latest_handler")
+    # ic(browser_name, value, "latest_handler")
 
     if return_value:
         return float(value)
@@ -99,13 +103,16 @@ def _latest_handler(browser_name: str, target_array: list, return_value: bool = 
         target_array.append(float(value))
 
 
-def _highest_handler(source_array: list, target_array: list):
+def _highest_handler(source_array: list, target_array: list) -> None:
+    """ 'highest' key handler from config """
     value = source_array[-1]
     target_array.append(value)
 
 
 def _validation_boundary_conditions(browser_name: str, source_array: list, target_array: list):
     """
+    Checking that the source_array has not gone beyond the target_array
+
     browser_name - basic browser name
     source_array - array with vnc_browsers
     target_array - array with browsers
@@ -121,6 +128,7 @@ def _validation_boundary_conditions(browser_name: str, source_array: list, targe
             'VNC version less then browser version; '
             f'vnc_{browser_name} version: {min_a}; {browser_name} version: {min_b}!'
         )
+
     if max(source_array) > max(target_array):
         raise Exception(
             'VNC version is greater then browser version; '
@@ -128,7 +136,8 @@ def _validation_boundary_conditions(browser_name: str, source_array: list, targe
         )
 
 
-def _remove_same_values_from_array(source_array: list, target_array: list):
+def _remove_same_values_from_array(source_array: list, target_array: list) -> None:
+    """ Removing duplicate values from source_array in the target_array """
     for version in source_array:
         try:
             target_array.remove(version)
@@ -136,11 +145,14 @@ def _remove_same_values_from_array(source_array: list, target_array: list):
             continue
 
 
-def _get_vnc_params(browser, browser_name) -> (bool, str, dict, dict) or (None, None, None, None):
+def _get_vnc_params(browser: dict, browser_name: str) -> (bool, str, dict, dict) or (None, None, None, None):
     """
-    browser - dict with browser object
-    browser_name - string with basic browser name
+    Getting the values you need to work with VNC browsers from config
+
+    browser - browser object
+    browser_name - string with browser name (not vnc)
     """
+
     if 'vnc-image' in browser and browser['vnc-image']['enable']:
         vnc = True
         vnc_browser_name = 'vnc_' + browser_name
@@ -156,6 +168,7 @@ def _get_vnc_params(browser, browser_name) -> (bool, str, dict, dict) or (None, 
 
 
 def _string_sanitize(string: str) -> str:
+    """ Sanitize string method """
     banned_symbols = [
         '\r', '\n', '\t', '\\', '/', ' ', '<', '>', ';', ':', "'", '"',
         '[', ']', '|', '{', '}', '(', ')', '*', '&', '^', '%', '$', '#',
@@ -185,7 +198,6 @@ class Configurator:
         # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()
         self.list_of_active_browsers = self._get_active_browsers_list()
-
         self.browsers_dict = self._get_default_browsers_dict()
         self._set_browsers_versions()
         self._set_default_browsers_version()
@@ -355,9 +367,6 @@ class Configurator:
             _browser_name = response_body['results'][i]['name']
             available_browsers_in_registry.append(_browser_name)
 
-        # ic(self.list_of_active_browsers)
-        # ic(available_browsers_in_registry)
-
         for i in range(len(self.list_of_active_browsers)):
             if self.list_of_active_browsers[i] in available_browsers_in_registry:
                 pass
@@ -373,7 +382,7 @@ class Configurator:
             zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
         )
 
-        for browser in self.dict_of_active_browsers_versions:
+        for browser in self.browsers_dict:
             page_size_default = 25
             response_body = _docker_hub_get_request(
                 'hub.docker.com',
@@ -386,9 +395,9 @@ class Configurator:
 
             # ic(available_browsers_versions_in_registry[browser])
 
-            temp_versions_list = self.dict_of_active_browsers_versions[browser]
+            temp_versions_list = self.browsers_dict[browser]['versions']
             # ic(temp_versions_list)
-            # ic(type(temp_versions_list))
+
             for i in range(len(temp_versions_list)):
                 if str(temp_versions_list[i]) in available_browsers_versions_in_registry[browser]:
                     # ic(browser, temp_versions_list[i], "OK")

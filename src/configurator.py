@@ -192,8 +192,7 @@ class Configurator:
 
         self.browsers = self.config[0]
         self.aerokube = self.config[1]
-        self.ggr_hosts = self.config[2]
-        self.selenoid_hosts = self.config[3]
+        self.hosts = self.config[2]
 
         # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()
@@ -209,6 +208,10 @@ class Configurator:
         self._set_aerokube_images_version()
         self._set_aerokube_host_ports()
         ic(self.aerokube_dict)
+
+        # Variables for hosts from config
+        self.hosts_dict = self._get_default_hosts_dict()
+        ic(self.hosts_dict)
 
     def __call__(self):
         self.config_validation()
@@ -462,16 +465,46 @@ class Configurator:
 
         return aerokube_dict
 
-    def _set_aerokube_images_version(self):
+    def _set_aerokube_images_version(self) -> None:
         """ TODO: validations for versions """
 
         for image_name in self.aerokube_dict:
             value = self.aerokube[image_name]['image-version']
             self.aerokube_dict[image_name]['image-version'] = value
 
-    def _set_aerokube_host_ports(self):
+    def _set_aerokube_host_ports(self) -> None:
 
         for image_name in self.aerokube_dict:
             value = self.aerokube[image_name]['host-port']
             if 0 < value < 65535:
                 self.aerokube_dict[image_name]['host-port'] = value
+
+    def _get_default_hosts_dict(self) -> dict:
+
+        hosts_dict = {
+            'selenoid': [
+                {
+                    'ip': None,
+                    'port': None,
+                    'count': None,
+                    'cpu-limit': None,
+                    'teams-quota': None,
+                    'region-name': None,
+                    'vnc': None
+                } for i in range(len(self.hosts['selenoid']))
+            ]
+        }
+
+        if 'ggr' in self.hosts:
+            hosts_dict.update(
+                {
+                    'ggr': [
+                        {
+                            'ip': None
+                        } for _ in range(len(self.hosts['ggr']))
+                    ],
+                }
+            )
+
+        return hosts_dict
+

@@ -32,14 +32,12 @@ class ConfigParser(OpenFile):
     def config_parse(self) -> tuple:
         browsers = self.parse_browsers()
         aerokube = self.parse_aerokube()
-        ggr_hosts = self.parse_ggr_hosts()
-        selenoid_hosts = self.parse_selenoid_hosts()
+        hosts = self.parse_hosts()
 
         # ic(browsers)
         # ic(aerokube)
-        # ic(ggr_hosts)
-        # ic(selenoid_hosts)
-        return browsers, aerokube, ggr_hosts, selenoid_hosts
+        # ic(hosts)
+        return browsers, aerokube, hosts
 
     def parse_browsers(self):
         browsers = self.config_file['browsers']
@@ -49,13 +47,9 @@ class ConfigParser(OpenFile):
         aerokube = self.config_file['aerokube']
         return aerokube
 
-    def parse_ggr_hosts(self):
-        ggr_hosts = self.config_file['hosts']['ggr']
-        return ggr_hosts
-
-    def parse_selenoid_hosts(self):
-        selenoid_hosts = self.config_file['hosts']['selenoid']
-        return selenoid_hosts
+    def parse_hosts(self):
+        hosts = self.config_file['hosts']
+        return hosts
 
     def __del__(self):
         pass

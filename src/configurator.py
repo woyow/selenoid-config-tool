@@ -555,6 +555,7 @@ class Configurator:
         return hosts_dict
 
     def _set_hosts_ip(self) -> None:
+        """ Set 'ip' values into hosts dictionary """
 
         if 'ggr' in self.hosts:
             length = len(self.hosts['ggr'])
@@ -568,6 +569,7 @@ class Configurator:
             self.hosts_dict['selenoid'][i]['ip'] = value
 
     def _set_hosts_port(self) -> None:
+        """ Set 'port' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -575,6 +577,7 @@ class Configurator:
             self.hosts_dict['selenoid'][i]['port'] = value
 
     def _set_hosts_domain(self) -> None:
+        """ Set 'domain' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -584,6 +587,7 @@ class Configurator:
                 self.hosts_dict['selenoid'][i]['domain'] = value
 
     def _set_hosts_count(self) -> None:
+        """ Set 'count' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -599,6 +603,7 @@ class Configurator:
                 self.hosts_dict['selenoid'][i]['count'] = value
 
     def _set_hosts_cpu_limit(self) -> None:
+        """ Set 'cpu-limit' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -614,6 +619,7 @@ class Configurator:
                 self.hosts_dict['selenoid'][i]['cpu-limit'] = value
 
     def _set_hosts_teams_quota(self) -> None:
+        """ Set 'teams-quota' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -624,6 +630,7 @@ class Configurator:
                 self.hosts_dict['selenoid'][i]['teams-quota'] = value
 
     def _set_hosts_region_name(self) -> None:
+        """ Set 'region-name' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):
@@ -634,6 +641,7 @@ class Configurator:
                 self.hosts_dict['selenoid'][i]['region-name'] = value
 
     def _set_hosts_vnc(self) -> None:
+        """ Set 'vnc' values into hosts dictionary """
 
         length = len(self.hosts['selenoid'])
         for i in range(length):

@@ -85,33 +85,34 @@ aerokube:
     image-version: latest # not secure, use fix version!
     host-port: 8888
 
-### GGR hosts config
-ggr-hosts:
-  -
-    ip: "8.8.8.8"
 
 
-### Selenoid hosts config
-selenoid-hosts:
-  -
-    ip: "111.111.111.111"
-    port: 4444
-    count: 1 # load balancing priority
-    cpu-limit: 8 # 1 CPU = 1 browser session
-    teams-quota: [QA_TEAM_1, QA_TEAM_2] # quota for ggr config
-    region-name: us-east
-  -
-    ip: "111.111.111.112"
-    port: 4444
-    count: 1 # load balancing priority
-    cpu-limit: 8 # 1 CPU = 1 browser session
-    teams-quota: [QA_TEAM_1] # quota for ggr config
-    region-name: us-west
-  -
-    ip: "111.111.111.113"
-    port: 4444
-    count: 3 # load balancing priority
-    cpu-limit: 2 # 1 CPU = 1 browser session
-    teams-quota: [DEV_TEAM_1] # quota for ggr config
-    region-name: us-west
-    vnc: vnc://111.111.111.113:6900
+### Hosts config
+hosts:
+  ggr: # Go Grid Router balancer config
+    -
+      ip: "8.8.8.8"
+
+  selenoid:
+    -
+      ip: "111.111.111.111"
+      port: 4444
+      count: 1 # load balancing priority
+      cpu-limit: 8 # 1 CPU = 1 browser session
+      teams-quota: [QA_TEAM_1, QA_TEAM_2] # quota for ggr config
+      region-name: us-east
+    -
+      ip: "111.111.111.112"
+      port: 4444
+      count: 1 # load balancing priority
+      cpu-limit: 8 # 1 CPU = 1 browser session
+      teams-quota: [QA_TEAM_1] # quota for ggr config
+      region-name: us-west
+    -
+      ip: "111.111.111.113"
+      port: 4444
+      count: 3 # load balancing priority
+      cpu-limit: 2 # 1 CPU = 1 browser session
+      teams-quota: [DEV_TEAM_1] # quota for ggr config
+      region-name: us-west
+      vnc: vnc://111.111.111.113:6900

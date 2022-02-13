@@ -50,11 +50,11 @@ class ConfigParser(OpenFile):
         return aerokube
 
     def parse_ggr_hosts(self):
-        ggr_hosts = self.config_file['ggr-hosts']
+        ggr_hosts = self.config_file['hosts']['ggr']
         return ggr_hosts
 
     def parse_selenoid_hosts(self):
-        selenoid_hosts = self.config_file['selenoid-hosts']
+        selenoid_hosts = self.config_file['hosts']['selenoid']
         return selenoid_hosts
 
     def __del__(self):

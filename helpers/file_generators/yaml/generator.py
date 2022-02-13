@@ -1,4 +1,4 @@
-import xml
+import yaml
 
 
 class Generator:

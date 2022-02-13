@@ -546,7 +546,8 @@ class Configurator:
                 {
                     'ggr': [
                         {
-                            'ip': None
+                            'ip': None,
+                            'domain': None
                         } for _ in range(len(self.hosts['ggr']))
                     ],
                 }
@@ -578,6 +579,13 @@ class Configurator:
 
     def _set_hosts_domain(self) -> None:
         """ Set 'domain' values into hosts dictionary """
+
+        if 'ggr' in self.hosts:
+            length = len(self.hosts['ggr'])
+            for i in range(length):
+                if 'domain' in self.hosts['ggr'][i]:
+                    value = self.hosts['ggr'][i]['domain']
+                    self.hosts_dict['ggr'][i]['domain'] = value
 
         length = len(self.hosts['selenoid'])
         for i in range(length):

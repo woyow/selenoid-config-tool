@@ -447,21 +447,39 @@ class Configurator:
             'selenoid': {
                 'image-version': None,
                 'host-port': None
-            },
-            'selenoid-ui': {
-                'image-version': None,
-                'host-port': None
-            },
-            'ggr': {
-                'image-version': None,
-                'host-port': None,
-                'encrypt-connection': None
-            },
-            'ggr-ui': {
-                'image-version': None,
-                'host-port': None
             }
         }
+
+        if 'selenoid-ui' in self.aerokube:
+            aerokube_dict.update(
+                {
+                    'selenoid-ui': {
+                        'image-version': None,
+                        'host-port': None
+                    }
+                }
+            )
+
+        if 'ggr' in self.aerokube:
+            aerokube_dict.update(
+                {
+                    'ggr': {
+                        'image-version': None,
+                        'host-port': None,
+                        'encrypt-connection': None
+                    }
+                }
+            )
+
+        if 'ggr-ui' in self.aerokube:
+            aerokube_dict.update(
+                {
+                    'ggr-ui': {
+                        'image-version': None,
+                        'host-port': None
+                    }
+                }
+            )
 
         return aerokube_dict
 

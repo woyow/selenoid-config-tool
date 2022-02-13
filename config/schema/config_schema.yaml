@@ -95,7 +95,7 @@ mapping:
             required: true
       selenoid-ui:
         type: map
-        required: true
+        required: false
         mapping:
           image-version:
             type: any
@@ -105,7 +105,7 @@ mapping:
             required: true
       ggr:
         type: map
-        required: true
+        required: false
         mapping:
           image-version:
             type: any
@@ -118,7 +118,7 @@ mapping:
             required: false
       ggr-ui:
         type: map
-        required: true
+        required: false
         mapping:
           image-version:
             type: any

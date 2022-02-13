@@ -12,7 +12,7 @@ def _docker_hub_get_request(
         body: dict = None,
         secure: bool = None,
         check_count: bool = None
-):
+) -> dict:
     """ Wrapper for convenient queries to the docker registry """
 
     while True:
@@ -37,8 +37,9 @@ def _docker_hub_get_request(
     return response_body
 
 
-def _range_handler(browser_name: str, versions: dict, target_array: list):
+def _range_handler(browser_name: str, versions: dict, target_array: list) -> None:
     """ 'range' key handler from config """
+
     min_version = versions['range']['min']
     max_version = versions['range']['max']
     # ic(min_version)
@@ -63,8 +64,9 @@ def _range_handler(browser_name: str, versions: dict, target_array: list):
         value += 1.0
 
 
-def _array_handler(browser_name: str, versions: dict, target_array: list):
+def _array_handler(browser_name: str, versions: dict, target_array: list) -> None:
     """ 'array' key handler from config """
+
     array = versions['array']
     for value in array:
         if value == 'latest':
@@ -79,6 +81,7 @@ def _array_handler(browser_name: str, versions: dict, target_array: list):
 
 def _latest_handler(browser_name: str, target_array: list, return_value: bool = None) -> float or None:
     """ 'latest' key handler from config """
+
     page_size_default = 2
     response_body = _docker_hub_get_request(
         'hub.docker.com',
@@ -105,11 +108,12 @@ def _latest_handler(browser_name: str, target_array: list, return_value: bool = 
 
 def _highest_handler(source_array: list, target_array: list) -> None:
     """ 'highest' key handler from config """
+
     value = source_array[-1]
     target_array.append(value)
 
 
-def _validation_boundary_conditions(browser_name: str, source_array: list, target_array: list):
+def _validation_boundary_conditions(browser_name: str, source_array: list, target_array: list) -> None:
     """
     Checking that the source_array has not gone beyond the target_array
 
@@ -138,6 +142,7 @@ def _validation_boundary_conditions(browser_name: str, source_array: list, targe
 
 def _remove_same_values_from_array(source_array: list, target_array: list) -> None:
     """ Removing duplicate values from source_array in the target_array """
+
     for version in source_array:
         try:
             target_array.remove(version)
@@ -186,7 +191,7 @@ class Configurator:
     # ic.disable()
     ic.enable()
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         # Parsing yaml config
         self.config_parser = ConfigParser()
@@ -218,13 +223,13 @@ class Configurator:
         self.hosts_dict = self._get_default_hosts_dict()
         ic(self.hosts_dict)
 
-    def __call__(self):
+    def __call__(self) -> None:
         self.generate_result()
 
-    def generate_result(self):
+    def generate_result(self) -> None:
         pass
 
-    def configurate_browsers(self):
+    def configurate_browsers(self) -> None:
         pass
 
     def _browser_count_check(self) -> None:

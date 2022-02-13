@@ -187,12 +187,10 @@ class Configurator:
     ic.enable()
 
     def __init__(self):
-        self.config_parser = ConfigParser()
-        self.config = self.config_parser()
 
-        self.browsers = self.config[0]
-        self.aerokube = self.config[1]
-        self.hosts = self.config[2]
+        # Parsing yaml config
+        self.config_parser = ConfigParser()
+        self.browsers, self.aerokube, self.hosts = self.config_parser()
 
         # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()

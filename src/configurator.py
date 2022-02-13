@@ -192,6 +192,9 @@ class Configurator:
         self.config_parser = ConfigParser()
         self.browsers, self.aerokube, self.hosts = self.config_parser()
 
+        # Pre-validation
+        self._browser_count_check()
+
         # Variables for browsers from config
         self.count_of_all_browsers = self._get_count_of_all_browsers()
         self.list_of_active_browsers = self._get_active_browsers_list()
@@ -200,6 +203,10 @@ class Configurator:
         self._set_default_browsers_version()
         self._set_browsers_base_name()
         ic(self.browsers_dict)
+
+        # Browser validations
+        self._check_browser_existence_in_docker_registry()
+        self._check_browser_version_existence_in_docker_registry()
 
         # Variables for aerokube from config
         self.aerokube_dict = self._get_default_aerokube_dict()
@@ -212,7 +219,7 @@ class Configurator:
         ic(self.hosts_dict)
 
     def __call__(self):
-        self.config_validation()
+        self.generate_result()
 
     def generate_result(self):
         pass
@@ -220,20 +227,18 @@ class Configurator:
     def configurate_browsers(self):
         pass
 
-    def config_validation(self):
-        self._browser_count_check()
-        self._browser_existence_in_registry_check()
-        self._browser_version_existence_in_registry_check()
-
-    def _browser_count_check(self):
+    def _browser_count_check(self) -> None:
+        """ Validation: count of browsers > 0 """
         count = len(self.browsers)
         if count < 1:
             raise Exception('You must use at least one browser in your config')
 
     def _get_count_of_all_browsers(self) -> int:
+        """ Return count of browsers in config """
         return len(self.browsers)
 
     def _get_active_browsers_list(self) -> list:
+        """ Get list browsers with key and value 'use': true in config """
         browsers = []
 
         for i in range(self.count_of_all_browsers):
@@ -248,7 +253,8 @@ class Configurator:
 
         return browsers
 
-    def _get_default_browsers_dict(self):
+    def _get_default_browsers_dict(self) -> dict:
+        """ Get default dictionary template for browsers """
 
         length = len(self.list_of_active_browsers)
         browsers_dict = dict(
@@ -263,10 +269,11 @@ class Configurator:
                 ]
             )
         )
-        ic(browsers_dict)
+
         return browsers_dict
 
     def _set_browsers_versions(self) -> None:
+        """ Set 'versions' values into browser's dictionary """
 
         for i in range(self.count_of_all_browsers):
             browser_object = self.browsers[i]
@@ -317,6 +324,7 @@ class Configurator:
                         self.browsers_dict.pop(browser_name)
 
     def _set_default_browsers_version(self) -> None:
+        """ Set 'default-version' values into browser's dictionary """
 
         for i in range(len(self.browsers)):
             browser_object = self.browsers[i]
@@ -357,64 +365,8 @@ class Configurator:
 
                 self.browsers_dict[vnc_browser_name]['default-version'] = value
 
-    def _browser_existence_in_registry_check(self):
-        page_size_default = 25
-        response_body = _docker_hub_get_request(
-            'hub.docker.com',
-            '/v2/repositories/selenoid',
-            {'page_size': page_size_default}
-        )
-
-        images_count = response_body['count']
-        available_browsers_in_registry = []
-
-        for i in range(images_count):
-            _browser_name = response_body['results'][i]['name']
-            available_browsers_in_registry.append(_browser_name)
-
-        for i in range(len(self.list_of_active_browsers)):
-            if self.list_of_active_browsers[i] in available_browsers_in_registry:
-                pass
-            else:
-                raise Exception(
-                    f'Image "{self.list_of_active_browsers[i]}" not found '
-                    f'in aerokube docker registry https://hub.docker.com/u/selenoid'
-                )
-
-    def _browser_version_existence_in_registry_check(self):
-
-        available_browsers_versions_in_registry = dict(
-            zip(self.list_of_active_browsers, [[] for _ in range(len(self.list_of_active_browsers))])
-        )
-
-        for browser in self.browsers_dict:
-            page_size_default = 25
-            response_body = _docker_hub_get_request(
-                'hub.docker.com',
-                f'/v2/repositories/selenoid/{browser}/tags/',
-                {'page_size': page_size_default}
-            )
-
-            for i in range(response_body['count']):
-                available_browsers_versions_in_registry[browser].append(response_body['results'][i]['name'])
-
-            # ic(available_browsers_versions_in_registry[browser])
-
-            temp_versions_list = self.browsers_dict[browser]['versions']
-            # ic(temp_versions_list)
-
-            for i in range(len(temp_versions_list)):
-                if str(temp_versions_list[i]) in available_browsers_versions_in_registry[browser]:
-                    # ic(browser, temp_versions_list[i], "OK")
-                    pass
-                else:
-                    raise Exception(
-                        f'{browser}:{temp_versions_list[i]} not found into selenoid docker registry. '
-                        f'Available versions: {available_browsers_versions_in_registry[browser]}'
-                    )
-        # ic(available_browsers_versions_in_registry)
-
     def _set_browsers_base_name(self) -> None:
+        """ Set 'base-name' values into browser's dictionary """
 
         for i in range(len(self.browsers)):
             browser_object = self.browsers[i]
@@ -439,7 +391,68 @@ class Configurator:
                 value = 'VNC_' + _string_sanitize(browser_base_name)
                 self.browsers_dict[vnc_browser_name]['base-name'] = value
 
+    def _check_browser_existence_in_docker_registry(self) -> None:
+        """ Validation: All browsers must exist in the docker registry """
+
+        page_size_default = 25
+        response_body = _docker_hub_get_request(
+            'hub.docker.com',
+            '/v2/repositories/selenoid',
+            {'page_size': page_size_default}
+        )
+
+        images_count = response_body['count']
+        available_browsers_in_registry = []
+
+        for i in range(images_count):
+            browser_name = response_body['results'][i]['name']
+            available_browsers_in_registry.append(browser_name)
+
+        for i in range(len(self.list_of_active_browsers)):
+            if self.list_of_active_browsers[i] in available_browsers_in_registry:
+                pass
+            else:
+                raise Exception(
+                    f'Image "{self.list_of_active_browsers[i]}" not found '
+                    f'in aerokube docker registry https://hub.docker.com/u/selenoid'
+                )
+
+    def _check_browser_version_existence_in_docker_registry(self) -> None:
+        """ Validation: All browser versions must exist in the docker registry """
+
+        length = len(self.list_of_active_browsers)
+        available_browsers_versions_in_registry = dict(
+            zip(self.list_of_active_browsers, [[] for _ in range(length)])
+        )
+
+        for browser in self.browsers_dict:
+            page_size_default = 25
+            response_body = _docker_hub_get_request(
+                'hub.docker.com',
+                f'/v2/repositories/selenoid/{browser}/tags/',
+                {'page_size': page_size_default}
+            )
+
+            count = response_body['count']
+            for i in range(count):
+                value = response_body['results'][i]['name']
+                available_browsers_versions_in_registry[browser].append(value)
+
+            temp_versions_list = self.browsers_dict[browser]['versions']
+            length = len(temp_versions_list)
+            for i in range(length):
+                version = str(temp_versions_list[i])
+                if version in available_browsers_versions_in_registry[browser]:
+                    pass
+                else:
+                    raise Exception(
+                        f'{browser}:{version} not found into selenoid docker registry. '
+                        f'Available versions: {available_browsers_versions_in_registry[browser]}'
+                    )
+        # ic(available_browsers_versions_in_registry)
+
     def _get_default_aerokube_dict(self) -> dict:
+        """ Get default dictionary template for aerokube """
 
         aerokube_dict = {
             'selenoid': {
@@ -482,13 +495,14 @@ class Configurator:
         return aerokube_dict
 
     def _set_aerokube_images_version(self) -> None:
-        """ TODO: validations for versions """
+        """ Set 'image-version' values into aerokube's dictionary """
 
         for image_name in self.aerokube_dict:
             value = self.aerokube[image_name]['image-version']
             self.aerokube_dict[image_name]['image-version'] = value
 
     def _set_aerokube_host_ports(self) -> None:
+        """ Set 'host-port' values into aerokube's dictionary """
 
         for image_name in self.aerokube_dict:
             value = self.aerokube[image_name]['host-port']
@@ -496,6 +510,7 @@ class Configurator:
                 self.aerokube_dict[image_name]['host-port'] = value
 
     def _get_default_hosts_dict(self) -> dict:
+        """ Get default dictionary template for hosts """
 
         hosts_dict = {
             'selenoid': [
@@ -507,7 +522,7 @@ class Configurator:
                     'teams-quota': None,
                     'region-name': None,
                     'vnc': None
-                } for i in range(len(self.hosts['selenoid']))
+                } for _ in range(len(self.hosts['selenoid']))
             ]
         }
 
@@ -523,4 +538,3 @@ class Configurator:
             )
 
         return hosts_dict
-

@@ -163,4 +163,11 @@ mapping:
               region-name:
                 type: str
               vnc:
-                type: str
+                type: map
+                mapping:
+                  ip:
+                    type: any # Change to ip in pykwalify 1.8.0+
+                    required: true
+                  port:
+                    type: int
+                    required: true

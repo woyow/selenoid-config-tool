@@ -115,4 +115,11 @@ hosts:
       cpu-limit: 2 # 1 CPU = 1 browser session
       teams-quota: [DEV_TEAM_1] # quota for ggr config
       region-name: us-west
-      vnc: vnc://111.111.111.113:6900
+      vnc:
+        ip: "111.111.111.113"
+        port: 6900
+    -
+      ip: "111.111.111.114"
+      domain: "example.com"
+      port: 4444
+      cpu-limit: 2

@@ -221,6 +221,14 @@ class Configurator:
 
         # Variables for hosts from config
         self.hosts_dict = self._get_default_hosts_dict()
+        self._set_hosts_ip()
+        self._set_hosts_domain()
+        self._set_hosts_port()
+        self._set_hosts_count()
+        self._set_hosts_cpu_limit()
+        self._set_hosts_teams_quota()
+        self._set_hosts_region_name()
+        self._set_hosts_vnc()
         ic(self.hosts_dict)
 
     def __call__(self) -> None:
@@ -380,7 +388,6 @@ class Configurator:
                 browser_object, browser_name
             )
             browser_base_name = browser_object['base-name']
-            ic(browser_base_name)
 
             if browser_name in self.browsers_dict:
                 vnc_only = None
@@ -526,7 +533,10 @@ class Configurator:
                     'cpu-limit': None,
                     'teams-quota': None,
                     'region-name': None,
-                    'vnc': None
+                    'vnc': {
+                        'ip': None,
+                        'port': None
+                    }
                 } for _ in range(len(self.hosts['selenoid']))
             ]
         }
@@ -543,3 +553,95 @@ class Configurator:
             )
 
         return hosts_dict
+
+    def _set_hosts_ip(self) -> None:
+
+        if 'ggr' in self.hosts:
+            length = len(self.hosts['ggr'])
+            for i in range(length):
+                value = self.hosts['ggr'][i]['ip']
+                self.hosts_dict['ggr'][i]['ip'] = value
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            value = self.hosts['selenoid'][i]['ip']
+            self.hosts_dict['selenoid'][i]['ip'] = value
+
+    def _set_hosts_port(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            value = self.hosts['selenoid'][i]['port']
+            self.hosts_dict['selenoid'][i]['port'] = value
+
+    def _set_hosts_domain(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'domain' in self.hosts['selenoid'][i]:
+                value = self.hosts['selenoid'][i]['domain']
+
+                self.hosts_dict['selenoid'][i]['domain'] = value
+
+    def _set_hosts_count(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'count' in self.hosts['selenoid'][i]:
+                value = self.hosts['selenoid'][i]['count']
+
+                if not isinstance(value, int):
+                    raise Exception('count priority must be of type integer')
+
+                if value < 1:
+                    raise Exception('count priority can not be 0')
+
+                self.hosts_dict['selenoid'][i]['count'] = value
+
+    def _set_hosts_cpu_limit(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'cpu-limit' in self.hosts['selenoid'][i]:
+                value = self.hosts['selenoid'][i]['cpu-limit']
+
+                if not isinstance(value, int):
+                    raise Exception('cpu-limit must be of type integer')
+
+                if value < 1:
+                    raise Exception('cpu-limit can not be 0')
+
+                self.hosts_dict['selenoid'][i]['cpu-limit'] = value
+
+    def _set_hosts_teams_quota(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'teams-quota' in self.hosts['selenoid'][i]:
+                value = self.hosts['selenoid'][i]['teams-quota']
+                value = list(map(_string_sanitize, value))
+
+                self.hosts_dict['selenoid'][i]['teams-quota'] = value
+
+    def _set_hosts_region_name(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'region-name' in self.hosts['selenoid'][i]:
+                value = self.hosts['selenoid'][i]['region-name']
+                value = _string_sanitize(value)
+
+                self.hosts_dict['selenoid'][i]['region-name'] = value
+
+    def _set_hosts_vnc(self) -> None:
+
+        length = len(self.hosts['selenoid'])
+        for i in range(length):
+            if 'vnc' in self.hosts['selenoid'][i]:
+                vnc_object = self.hosts['selenoid'][i]['vnc']
+                value_ip = vnc_object['ip']
+                value_port = vnc_object['port']
+
+                self.hosts_dict['selenoid'][i]['vnc']['ip'] = value_ip
+                self.hosts_dict['selenoid'][i]['vnc']['port'] = value_port
+

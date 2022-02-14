@@ -186,6 +186,13 @@ def _string_sanitize(string: str) -> str:
     return string
 
 
+def _is_image_type_valid(image_type: str, images: str or list) -> None:
+    if image_type in images:
+        return
+    else:
+        raise Exception(f'image_type {image_type} not supported')
+
+
 class Configurator:
 
     # ic.disable()
@@ -221,14 +228,7 @@ class Configurator:
 
         # Variables for hosts from config
         self.hosts_dict = self._get_default_hosts_dict()
-        self._set_hosts_ip()
-        self._set_hosts_domain()
-        self._set_hosts_port()
-        self._set_hosts_count()
-        self._set_hosts_cpu_limit()
-        self._set_hosts_teams_quota()
-        self._set_hosts_region_name()
-        self._set_hosts_vnc()
+        self._hosts_setter()
         ic(self.hosts_dict)
 
     def __call__(self) -> None:
@@ -518,8 +518,9 @@ class Configurator:
 
         for image_name in self.aerokube_dict:
             value = self.aerokube[image_name]['host-port']
-            if 0 < value < 65535:
-                self.aerokube_dict[image_name]['host-port'] = value
+            if not 0 < value < 65535:
+                raise Exception(f'port value for aerokube/{image_name} must be 0...65535')
+            self.aerokube_dict[image_name]['host-port'] = value
 
     def _get_default_hosts_dict(self) -> dict:
         """ Get default dictionary template for hosts """
@@ -528,6 +529,7 @@ class Configurator:
             'selenoid': [
                 {
                     'ip': None,
+                    'domain': None,
                     'port': None,
                     'count': None,
                     'cpu-limit': None,
@@ -555,109 +557,175 @@ class Configurator:
 
         return hosts_dict
 
-    def _set_hosts_ip(self) -> None:
+    def _hosts_setter(self):
+
+        if 'ggr' in self.hosts:
+            image_type = 'ggr'
+            ggr_length = len(self.hosts[image_type])
+
+            for count in range(ggr_length):
+                hosts_object = self.hosts[image_type][count]
+                args = (hosts_object, image_type, count)
+                self._set_hosts_ip(*args)
+                self._set_hosts_domain(*args)
+
+        selenoid_length = len(self.hosts['selenoid'])
+        image_type = 'selenoid'
+
+        for count in range(selenoid_length):
+            hosts_object = self.hosts[image_type][count]
+            args = (hosts_object, image_type, count)
+            self._set_hosts_ip(*args)
+            self._set_hosts_port(*args)
+            self._set_hosts_domain(*args)
+            self._set_hosts_count(*args)
+            self._set_hosts_cpu_limit(*args)
+            self._set_hosts_teams_quota(*args)
+            self._set_hosts_region_name(*args)
+            self._set_hosts_vnc(*args)
+
+    def _set_hosts_ip(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'ip' values into hosts dictionary """
 
-        if 'ggr' in self.hosts:
-            length = len(self.hosts['ggr'])
-            for i in range(length):
-                value = self.hosts['ggr'][i]['ip']
-                self.hosts_dict['ggr'][i]['ip'] = value
+        key = 'ip'
+        images = ('ggr', 'selenoid')
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            value = self.hosts['selenoid'][i]['ip']
-            self.hosts_dict['selenoid'][i]['ip'] = value
+        _is_image_type_valid(image_type, images)
 
-    def _set_hosts_port(self) -> None:
+        if key in hosts_object:
+            value = hosts_object[key]
+        else:
+            return
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_port(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'port' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            value = self.hosts['selenoid'][i]['port']
-            self.hosts_dict['selenoid'][i]['port'] = value
+        key = 'port'
+        images = 'selenoid'
 
-    def _set_hosts_domain(self) -> None:
+        _is_image_type_valid(image_type, images)
+
+        if key in hosts_object:
+            value = hosts_object[key]
+            if not 0 < value < 65535:
+                raise Exception(f'port value for {image_type}[{counter}] must be 0...65535')
+
+        else:
+            value = 4444  # Default port for selenoid api
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_domain(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'domain' values into hosts dictionary """
 
-        if 'ggr' in self.hosts:
-            length = len(self.hosts['ggr'])
-            for i in range(length):
-                if 'domain' in self.hosts['ggr'][i]:
-                    value = self.hosts['ggr'][i]['domain']
-                    self.hosts_dict['ggr'][i]['domain'] = value
+        key = 'domain'
+        images = ('ggr', 'selenoid')
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'domain' in self.hosts['selenoid'][i]:
-                value = self.hosts['selenoid'][i]['domain']
+        _is_image_type_valid(image_type, images)
 
-                self.hosts_dict['selenoid'][i]['domain'] = value
+        if key in hosts_object:
+            value = hosts_object[key]
+        else:
+            return
 
-    def _set_hosts_count(self) -> None:
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_count(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'count' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'count' in self.hosts['selenoid'][i]:
-                value = self.hosts['selenoid'][i]['count']
+        key = 'count'
+        images = 'selenoid'
 
-                if not isinstance(value, int):
-                    raise Exception('count priority must be of type integer')
+        _is_image_type_valid(image_type, images)
 
-                if value < 1:
-                    raise Exception('count priority can not be 0')
+        if key in hosts_object:
+            value = hosts_object[key]
 
-                self.hosts_dict['selenoid'][i]['count'] = value
+            if not isinstance(value, int):
+                raise Exception(f'count priority for {image_type}[{counter}] must be of type integer')
 
-    def _set_hosts_cpu_limit(self) -> None:
+            if value < 1:
+                raise Exception(f'count priority for for {image_type}[{counter}] can not be less then 1')
+        else:
+            value = 1  # Default value for load balancing priority
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_cpu_limit(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'cpu-limit' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'cpu-limit' in self.hosts['selenoid'][i]:
-                value = self.hosts['selenoid'][i]['cpu-limit']
+        key = 'cpu-limit'
+        images = 'selenoid'
 
-                if not isinstance(value, int):
-                    raise Exception('cpu-limit must be of type integer')
+        _is_image_type_valid(image_type, images)
 
-                if value < 1:
-                    raise Exception('cpu-limit can not be 0')
+        if key in hosts_object:
+            value = hosts_object[key]
 
-                self.hosts_dict['selenoid'][i]['cpu-limit'] = value
+            if not isinstance(value, int):
+                raise Exception(f'cpu-limit for {image_type}[{counter}] must be of type integer')
 
-    def _set_hosts_teams_quota(self) -> None:
+            if value < 1:
+                raise Exception(f'cpu-limit for {image_type}[{counter}] can not be less then 1')
+        else:
+            value = 1  # Default value for cpu-limit
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_teams_quota(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'teams-quota' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'teams-quota' in self.hosts['selenoid'][i]:
-                value = self.hosts['selenoid'][i]['teams-quota']
-                value = list(map(_string_sanitize, value))
+        key = 'teams-quota'
+        images = 'selenoid'
 
-                self.hosts_dict['selenoid'][i]['teams-quota'] = value
+        _is_image_type_valid(image_type, images)
 
-    def _set_hosts_region_name(self) -> None:
+        if key in hosts_object:
+            value = hosts_object[key]
+            value = list(map(_string_sanitize, value))
+        else:
+            return
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_region_name(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'region-name' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'region-name' in self.hosts['selenoid'][i]:
-                value = self.hosts['selenoid'][i]['region-name']
-                value = _string_sanitize(value)
+        key = 'region-name'
+        images = 'selenoid'
 
-                self.hosts_dict['selenoid'][i]['region-name'] = value
+        _is_image_type_valid(image_type, images)
 
-    def _set_hosts_vnc(self) -> None:
+        if key in hosts_object:
+            value = hosts_object[key]
+            value = _string_sanitize(value)
+        else:
+            return
+
+        self.hosts_dict[image_type][counter][key] = value
+
+    def _set_hosts_vnc(self, hosts_object: dict, image_type: str, counter: int) -> None:
         """ Set 'vnc' values into hosts dictionary """
 
-        length = len(self.hosts['selenoid'])
-        for i in range(length):
-            if 'vnc' in self.hosts['selenoid'][i]:
-                vnc_object = self.hosts['selenoid'][i]['vnc']
-                value_ip = vnc_object['ip']
-                value_port = vnc_object['port']
+        key = 'vnc'
+        ip_key = 'ip'
+        port_key = 'port'
 
-                self.hosts_dict['selenoid'][i]['vnc']['ip'] = value_ip
-                self.hosts_dict['selenoid'][i]['vnc']['port'] = value_port
+        images = 'selenoid'
 
+        _is_image_type_valid(image_type, images)
+
+        if key in hosts_object:
+            vnc_object = hosts_object[key]
+            value_ip = vnc_object[ip_key]
+            value_port = vnc_object[port_key]
+        else:
+            return
+
+        self.hosts_dict[image_type][counter][key][ip_key] = value_ip
+        self.hosts_dict[image_type][counter][key][port_key] = value_port
+
+    def _generate_selenoid_docker_compose_file(self):
+        pass

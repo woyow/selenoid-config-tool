@@ -8,9 +8,6 @@ mapping:
           type:
             type: str
             required: true
-          base-name:
-            type: str
-            required: true
           use:
             type: bool
             required: true
@@ -20,16 +17,6 @@ mapping:
               enable:
                 type: bool
                 required: true
-              default-version:
-                type: map
-                required: true
-                mapping:
-                  highest:
-                    type: bool
-                  custom:
-                    type: float
-                  minimal:
-                    type: bool
               versions:
                 type: map
                 required: true

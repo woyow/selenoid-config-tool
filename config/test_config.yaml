@@ -2,12 +2,9 @@
 browsers:
   -
     type: chrome
-    base-name: ChromeDriver
     use: true
     vnc-image:
       enable: true # download VNC version of webdriver
-      default-version:
-        highest: true
       versions:
         #highest: true # highest (highest browser version); array with browser versions [97.0]
         range:
@@ -28,7 +25,6 @@ browsers:
 
   -
     type: chrome-mobile
-    base-name: ChromeMobileDriver
     use: true
     default-version:
       highest: true
@@ -37,12 +33,9 @@ browsers:
 
   -
     type: firefox
-    base-name: FirefoxDriver
     use: true
     vnc-image:
       enable: true
-      default-version:
-        highest: true
       versions:
         array: [90.0, 91.0, 96.0]
     default-version:
@@ -52,12 +45,9 @@ browsers:
 
   -
     type: opera
-    base-name: OperaDriver
     use: true
     vnc-image:
       enable: true
-      default-version:
-        highest: true
       versions:
         highest: true
     default-version:

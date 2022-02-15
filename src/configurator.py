@@ -1,5 +1,7 @@
 from helpers.config_parser import ConfigParser
 from helpers.http_requests import HttpRequests
+from helpers.file_generators import JsonGenerator
+
 from icecream import ic
 import json
 
@@ -230,14 +232,21 @@ class Configurator:
         ic(self.hosts_dict)
 
     def __call__(self) -> None:
-        self.generate_result()
         self.configurate_browsers()
 
-    def generate_result(self) -> None:
-        pass
-
     def configurate_browsers(self) -> None:
+        # TODO: if ggr exist in config
+        # TODO: config for each selenoid ip
         browsers_json_dict = self._generate_selenoid_browsers_json_file()
+        browsers_json_paths = (
+            './results/selenoid/config/browsers.json',
+            './results/ggr/config/browsers.json'
+        )
+        for browser_json_path in browsers_json_paths:
+            JsonGenerator(
+                browsers_json_dict,
+                browser_json_path
+            ).json_data_dump_to_file()
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """

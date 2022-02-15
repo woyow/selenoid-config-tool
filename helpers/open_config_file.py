@@ -5,7 +5,7 @@ import json
 
 class OpenFile:
 
-    def __init__(self, file_path):
+    def __init__(self, file_path: str) -> None:
         self.file_path = path.abspath(file_path)
         self.allow_yaml_formats = ['yaml', 'yml']
         self.allow_json_formats = ['json']

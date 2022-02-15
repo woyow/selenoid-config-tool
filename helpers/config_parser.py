@@ -1,4 +1,4 @@
-from helpers.open_file import OpenFile
+from helpers.open_config_file import OpenFile
 from pykwalify.core import Core
 from icecream import ic
 

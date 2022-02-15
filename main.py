@@ -6,7 +6,7 @@ import sys
 from helpers.change_root_dir import ChangeRootDir
 from helpers.config_parser import ConfigParser
 from src.configurator import Configurator
-from helpers.open_file import OpenFile
+from helpers.open_config_file import OpenFile
 
 def init() -> None:
     try:

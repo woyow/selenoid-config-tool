@@ -23,7 +23,7 @@ class HttpRequests:
 			headers: dict = None,
 			body: dict = None,
 			secure: bool = None
-	):
+	) -> None:
 		if secure is False:
 			self.protocol = 'http'
 		else:
@@ -50,7 +50,7 @@ class HttpRequests:
 
 		self.requests_session = requests.session()
 
-	def get(self):
+	def get(self) -> dict:
 		try:
 			response = self.requests_session.get(self.url, headers=self.headers, timeout=(10, 10))
 		except TimeoutError:

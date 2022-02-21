@@ -1,6 +1,7 @@
 from helpers.config_parser import ConfigParser
 from helpers.http_requests import HttpRequests
 from helpers.file_generators import JsonGenerator
+from helpers.file_system import FileSystem
 
 from icecream import ic
 import json
@@ -188,10 +189,52 @@ def _string_sanitize(string: str) -> str:
 
 
 def _is_image_type_valid(image_type: str, images: str or list) -> None:
+    """ Return exception if image type not valid """
     if image_type in images:
         return
     else:
         raise Exception(f'image_type {image_type} not supported')
+
+
+def _remove_old_dirs(root_path: str, actual_dirs: list) -> None:
+    """ Remove dir from old configs """
+    current_dirs = FileSystem(dir_name=root_path).get_dir_listing()
+    actual_dirs = list(map(lambda x: x.split('/')[-1], actual_dirs))
+
+    for directory in actual_dirs:
+        try:
+            current_dirs.remove(directory)
+        except ValueError:
+            continue
+
+    for directory in current_dirs:
+        path = root_path + '/' + directory
+        ic(path)
+        FileSystem(dir_name=path).remove_dir()
+
+
+def _create_dirs(dir_array: list or str) -> None:
+    """ Create dirs from list or string """
+    if type(dir_array) is str:
+        dir_array = [dir_array]
+
+    if dir_array:
+        for directory in dir_array:
+            FileSystem(
+                dir_name=directory
+            ).create_dir()
+
+
+def _remove_dirs(dir_array: list or str) -> None:
+    """ Remove dirs from list or string """
+    if type(dir_array) is str:
+        dir_array = [dir_array]
+
+    if dir_array:
+        for directory in dir_array:
+            FileSystem(
+                dir_name=directory
+            ).remove_dir()
 
 
 class Configurator:
@@ -232,21 +275,81 @@ class Configurator:
         ic(self.hosts_dict)
 
     def __call__(self) -> None:
-        self.configurate_browsers()
+        self.configurate()
 
-    def configurate_browsers(self) -> None:
-        # TODO: if ggr exist in config
-        # TODO: config for each selenoid ip
+    def configurate(self) -> None:
+        # TODO: remove dirs with old hosts from /results/ggr/ and /results/selenoid/
+        ggr_root_path = './results/ggr'
+        selenoid_root_path = './results/selenoid'
+
+        config_path = '/config'
+        quota_path = '/quota'
+
+        ggr_hosts_paths = []
+        selenoid_hosts_paths = []
+
+        paths_for_create = []
+        paths_for_remove = []
+
+        ggr_key = 'ggr'
+        selenoid_key = 'selenoid'
+        ip_key = 'ip'
+        domain_key = 'domain'
+
+        if ggr_key in self.hosts_dict:
+            count = len(self.hosts_dict[ggr_key])
+
+            for i in range(count):
+                ggr_object = self.hosts_dict[ggr_key][i]
+
+                if ggr_object[domain_key] or (ggr_object[ip_key] and ggr_object[domain_key]):
+                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[domain_key])
+                elif ggr_object[ip_key]:
+                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[ip_key])
+
+                paths_for_create.append(ggr_hosts_paths[i] + config_path)
+                paths_for_create.append(ggr_hosts_paths[i] + quota_path)
+        else:
+            paths_for_remove.append(ggr_root_path)
+
+        if 'selenoid' in self.hosts_dict:
+            count = len(self.hosts_dict[selenoid_key])
+
+            for i in range(count):
+                selenoid_object = self.hosts_dict[selenoid_key][i]
+
+                if selenoid_object[domain_key] or (selenoid_object[ip_key] and selenoid_object[domain_key]):
+                    selenoid_hosts_paths.append(selenoid_root_path + '/' + selenoid_object[domain_key])
+                elif selenoid_object[ip_key]:
+                    selenoid_hosts_paths.append(selenoid_root_path + '/' + selenoid_object[ip_key])
+
+                paths_for_create.append(selenoid_hosts_paths[i] + config_path)
+        else:
+            paths_for_remove.append(selenoid_root_path)
+
+        _remove_old_dirs(ggr_root_path, ggr_hosts_paths)
+        _remove_old_dirs(selenoid_root_path, selenoid_hosts_paths)
+        _create_dirs(paths_for_create)
+        _remove_dirs(paths_for_remove)
+
+        self._create_browsers_json(ggr_hosts_paths, selenoid_hosts_paths, config_path)
+        self._create_docker_compose_yaml()
+
+    def _create_browsers_json(self, ggr_hosts_paths: list, selenoid_hosts_paths: list, config_path: str) -> None:
+        file_name = 'browsers.json'
         browsers_json_dict = self._generate_selenoid_browsers_json_file()
-        browsers_json_paths = (
-            './results/selenoid/config/browsers.json',
-            './results/ggr/config/browsers.json'
-        )
-        for browser_json_path in browsers_json_paths:
+        paths_for_config = ggr_hosts_paths + selenoid_hosts_paths
+
+        for path in paths_for_config:
+            path += config_path
             JsonGenerator(
                 browsers_json_dict,
-                browser_json_path
+                path + '/' + file_name
             ).json_data_dump_to_file()
+
+    def _create_docker_compose_yaml(self):
+        file_name = 'docker-compose.yaml'
+        pass
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """

@@ -81,18 +81,23 @@ aerokube:
 hosts:
   ggr: # Go Grid Router balancer config
     -
-      ip: "8.8.8.8"
+      ip: 8.8.8.8
+    -
+      ip: 127.0.0.1
+      domain: localhost
+    -
+      domain: ggr-balancer.dev.example.com
 
   selenoid:
     -
-      ip: "111.111.111.111"
+      ip: 111.111.111.111
       port: 4444
       count: 1 # load balancing priority
       cpu-limit: 8 # 1 CPU = 1 browser session
       teams-quota: [QA_TEAM_1, QA_TEAM_2] # quota for ggr config
       region-name: us-east
     -
-      ip: "111.111.111.112"
+      ip: 111.111.111.112
       port: 4444
       count: 1 # load balancing priority
       cpu-limit: 8 # 1 CPU = 1 browser session
@@ -106,10 +111,10 @@ hosts:
       teams-quota: [DEV_TEAM_1] # quota for ggr config
       region-name: us-west
       vnc:
-        ip: "111.111.111.113"
+        ip: 111.111.111.113
         port: 6900
     -
-      ip: "111.111.111.114"
-      domain: "example.com"
+      ip: 111.111.111.114
+      domain: example.com
       port: 4444
       cpu-limit: 2

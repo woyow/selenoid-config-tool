@@ -279,7 +279,7 @@ class Configurator:
         self.configurate()
 
     def configurate(self) -> None:
-        # TODO: remove dirs with old hosts from /results/ggr/ and /results/selenoid/
+        """ Create config dirs and files """
         ggr_root_path = './results/ggr'
         selenoid_root_path = './results/selenoid'
 
@@ -337,6 +337,8 @@ class Configurator:
         self._create_docker_compose_yaml(ggr_hosts_paths, selenoid_hosts_paths)
 
     def _create_browsers_json(self, ggr_hosts_paths: list, selenoid_hosts_paths: list, config_path: str) -> None:
+        """ Create browsers.json file into ggr and selenoid dirs """
+
         file_name = 'browsers.json'
         browsers_json_dict = self._generate_selenoid_browsers_json_file()
         paths_for_config = ggr_hosts_paths + selenoid_hosts_paths
@@ -349,6 +351,8 @@ class Configurator:
             ).json_data_dump_to_file()
 
     def _create_docker_compose_yaml(self, ggr_hosts_paths: list, selenoid_hosts_paths: list) -> None:
+        """ Create docker-compose.yaml file into ggr and selenoid dirs """
+
         file_name = 'docker-compose.yaml'
         selenoid_image_type = 'selenoid'
         ggr_image_type = 'ggr'
@@ -464,30 +468,38 @@ class Configurator:
                         self.browsers_dict[browser_name][versions_key]
                     )
 
-                    #if len(self.browsers_dict[browser_name][versions_key]) < 1:
+                    # if len(self.browsers_dict[browser_name][versions_key]) < 1:
                     #    self.browsers_dict.pop(browser_name)
 
     def _set_default_browsers_version(self) -> None:
         """ Set 'default-version' values into browser's dictionary """
+        type_key = 'type'
+        default_version_key = 'default-version'
+        versions_key = 'versions'
+        vnc_versions_key = 'vnc-versions'
+        custom_key = 'custom'
+        highest_key = 'highest'
+        minimal_key = 'minimal'
 
         for i in range(len(self.browsers)):
             browser_object = self.browsers[i]
-            browser_name = browser_object['type']
-            default_version_object = browser_object['default-version']
+            browser_name = browser_object[type_key]
+            default_version_object = browser_object[default_version_key]
 
-            versions_list = self.browsers_dict[browser_name]['versions'] + \
-                            self.browsers_dict[browser_name]['vnc-versions']
+            versions_list = (
+                    self.browsers_dict[browser_name][versions_key] + self.browsers_dict[browser_name][vnc_versions_key]
+            )
 
-            ic(versions_list)
+            # ic(versions_list)
 
-            if 'custom' in default_version_object:
-                value = default_version_object['custom']
-            elif 'highest' in default_version_object:
+            if custom_key in default_version_object:
+                value = default_version_object[custom_key]
+            elif highest_key in default_version_object:
                 value = max(versions_list)
-            elif 'minimal' in default_version_object:
+            elif minimal_key in default_version_object:
                 value = min(versions_list)
 
-            self.browsers_dict[browser_name]['default-version'] = value
+            self.browsers_dict[browser_name][default_version_key] = value
 
     def _check_browser_existence_in_docker_registry(self) -> None:
         """ Validation: All browsers must exist in the docker registry """
@@ -890,7 +902,6 @@ class Configurator:
                     if mem:
                         browsers_dict[browser]['versions'][version]['mem'] = mem
 
-        ic(browsers_dict)
         return browsers_dict
 
     def _get_default_docker_compose_yaml_dict(self, image_type: str) -> dict:
@@ -919,7 +930,6 @@ class Configurator:
                     }
                 )
 
-        ic(docker_compose_dict)
         return docker_compose_dict
 
     def _generate_docker_compose_yaml_file(self, image_type: str) -> dict:
@@ -1006,6 +1016,7 @@ class Configurator:
                         }
                     }
                     docker_compose_dict[host][services_key].update(ggr_dict)
+
                 if ggr_ui_key in self.aerokube:
                     ggr_ui_dict = {
                         'ggr-ui': {
@@ -1032,5 +1043,4 @@ class Configurator:
 
             counter += 1
 
-        ic(docker_compose_dict)
         return docker_compose_dict

@@ -1,6 +1,7 @@
 from helpers.config_parser import ConfigParser
 from helpers.http_requests import HttpRequests
 from helpers.file_generators import JsonGenerator
+from helpers.file_generators import YamlGenerator
 from helpers.file_system import FileSystem
 
 from icecream import ic
@@ -333,7 +334,7 @@ class Configurator:
         _remove_dirs(paths_for_remove)
 
         self._create_browsers_json(ggr_hosts_paths, selenoid_hosts_paths, config_path)
-        self._create_docker_compose_yaml()
+        self._create_docker_compose_yaml(ggr_hosts_paths, selenoid_hosts_paths)
 
     def _create_browsers_json(self, ggr_hosts_paths: list, selenoid_hosts_paths: list, config_path: str) -> None:
         file_name = 'browsers.json'
@@ -347,9 +348,31 @@ class Configurator:
                 path + '/' + file_name
             ).json_data_dump_to_file()
 
-    def _create_docker_compose_yaml(self):
+    def _create_docker_compose_yaml(self, ggr_hosts_paths: list, selenoid_hosts_paths: list) -> None:
         file_name = 'docker-compose.yaml'
-        pass
+        selenoid_image_type = 'selenoid'
+        ggr_image_type = 'ggr'
+
+        ggr_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(ggr_image_type)
+        selenoid_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(selenoid_image_type)
+
+        if ggr_hosts_paths:
+            for path in ggr_hosts_paths:
+                host = path.split('/')[-1]
+                docker_compose_dict = ggr_docker_compose_yaml_dict[host]
+                YamlGenerator(
+                    docker_compose_dict,
+                    path + '/' + file_name
+                ).yaml_data_dump_to_file()
+
+        if selenoid_hosts_paths:
+            for path in selenoid_hosts_paths:
+                host = path.split('/')[-1]
+                docker_compose_dict = selenoid_docker_compose_yaml_dict[host]
+                YamlGenerator(
+                    docker_compose_dict,
+                    path + '/' + file_name
+                ).yaml_data_dump_to_file()
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
@@ -593,7 +616,6 @@ class Configurator:
                 {
                     'ip': None,
                     'domain': None,
-                    'port': None,
                     'count': None,
                     'cpu-limit': None,
                     'teams-quota': None,
@@ -639,7 +661,7 @@ class Configurator:
             hosts_object = self.hosts[image_type][count]
             args = (hosts_object, image_type, count)
             self._set_hosts_ip(*args)
-            self._set_hosts_port(*args)
+            # self._set_hosts_port(*args)  # port set in aerokube/selenoid/host-port
             self._set_hosts_domain(*args)
             self._set_hosts_count(*args)
             self._set_hosts_cpu_limit(*args)
@@ -870,3 +892,145 @@ class Configurator:
 
         ic(browsers_dict)
         return browsers_dict
+
+    def _get_default_docker_compose_yaml_dict(self, image_type: str) -> dict:
+        """ Get default template for docker-compose.yaml dict """
+
+        ip_key = 'ip'
+        domain_key = 'domain'
+        docker_compose_dict = {}
+
+        if image_type in self.hosts_dict:
+            count = len(self.hosts_dict[image_type])
+            for i in range(count):
+                image_object = self.hosts_dict[image_type][i]
+
+                if image_object[domain_key] or (image_object[ip_key] and image_object[domain_key]):
+                    key = domain_key
+                elif image_object[ip_key]:
+                    key = ip_key
+
+                docker_compose_dict.update(
+                    {
+                        image_object[key]: {
+                            'version': '3',
+                            'services': {}
+                        }
+                    }
+                )
+
+        ic(docker_compose_dict)
+        return docker_compose_dict
+
+    def _generate_docker_compose_yaml_file(self, image_type: str) -> dict:
+        """ Generate docker-compose.yaml dict """
+
+        docker_compose_dict = self._get_default_docker_compose_yaml_dict(image_type)
+        services_key = 'services'
+        selenoid_key = 'selenoid'
+        selenoid_ui_key = 'selenoid-ui'
+        ggr_key = 'ggr'
+        ggr_ui_key = 'ggr-ui'
+        host_port_key = 'host-port'
+        image_version_key = 'image-version'
+        cpu_limit_key = 'cpu-limit'
+
+        counter = 0
+        for host in docker_compose_dict:
+            if image_type == 'selenoid':
+                if selenoid_key in self.aerokube:
+                    selenoid_dict = {
+                        'selenoid': {
+                            'image': f"aerokube/selenoid:{self.aerokube_dict[selenoid_key][image_version_key]}",
+                            'network_mode': 'bridge',
+                            'ports': [
+                                f"{self.aerokube_dict[selenoid_key][host_port_key]}:"
+                                f"{self.aerokube_dict[selenoid_key][host_port_key]}"
+                            ],
+                            'volumes': [
+                                '/var/run/docker.sock:/var/run/docker.sock',
+                                './config/:/etc/selenoid/:ro'
+                            ],
+                            'command': [
+                                '-limit',
+                                f"{self.hosts_dict[selenoid_key][counter][cpu_limit_key]}",
+                                '-listen',
+                                f":{self.aerokube_dict[selenoid_key][host_port_key]}"
+                            ]
+                        }
+                    }
+
+                    docker_compose_dict[host][services_key].update(selenoid_dict)
+
+                if selenoid_ui_key in self.aerokube:
+                    selenoid_ui_dict = {
+                        'selenoid-ui': {
+                            'image': f"aerokube/selenoid-ui:{self.aerokube_dict[selenoid_ui_key][image_version_key]}",
+                            'network_mode': 'bridge',
+                            'ports': [
+                                f"{self.aerokube_dict[selenoid_ui_key][host_port_key]}:"
+                                f"{self.aerokube_dict[selenoid_ui_key][host_port_key]}"
+                            ],
+                            'links': [
+                                'selenoid'
+                            ],
+                            'command': [
+                                '--selenoid-uri',
+                                f"http://{selenoid_key}:{self.aerokube_dict[selenoid_key][host_port_key]}",
+                                '-listen',
+                                f":{self.aerokube_dict[selenoid_ui_key][host_port_key]}"
+                            ]
+                        }
+                    }
+                    docker_compose_dict[host][services_key].update(selenoid_ui_dict)
+
+            elif image_type == 'ggr':
+                if ggr_key in self.aerokube:
+                    ggr_dict = {
+                        'ggr': {
+                            'restart': 'always',
+                            'image': f"aerokube/ggr:{self.aerokube_dict[ggr_key][image_version_key]}",
+                            'ports': [
+                                f"{self.aerokube_dict[ggr_key][host_port_key]}:"
+                                f"{self.aerokube_dict[ggr_key][host_port_key]}"
+                            ],
+                            'volumes': [
+                                './:/etc/grid-router:ro'
+                            ],
+                            'command': [
+                                '-quotaDir',
+                                '/etc/grid-router/quota',
+                                '-listen',
+                                f":{self.aerokube_dict[ggr_key][host_port_key]}"
+                            ]
+                        }
+                    }
+                    docker_compose_dict[host][services_key].update(ggr_dict)
+                if ggr_ui_key in self.aerokube:
+                    ggr_ui_dict = {
+                        'ggr-ui': {
+                            'image': f"aerokube/ggr:{self.aerokube_dict[ggr_key][image_version_key]}",
+                            'ports': [
+                                f"{self.aerokube_dict[ggr_ui_key][host_port_key]}:"
+                                f"{self.aerokube_dict[ggr_ui_key][host_port_key]}"
+                            ],
+                            'links': [
+                                'ggr'
+                            ],
+                            'volumes': [
+                                './:/etc/grid-router:ro'
+                            ],
+                            'command': [
+                                '-quota-dir',
+                                '/etc/grid-router/quota',
+                                '-listen',
+                                f":{self.aerokube_dict[ggr_ui_key][host_port_key]}"
+                            ]
+                        }
+                    }
+                    docker_compose_dict[host][services_key].update(ggr_ui_dict)
+
+            counter += 1
+
+        ic(docker_compose_dict)
+        return docker_compose_dict

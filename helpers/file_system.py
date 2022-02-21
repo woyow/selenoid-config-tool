@@ -39,5 +39,8 @@ class FileSystem:
         return is_file_exist
 
     def get_dir_listing(self) -> list:
-        dir_listing = os.listdir(self.path)
+        try:
+            dir_listing = os.listdir(self.path)
+        except FileNotFoundError:
+            dir_listing = []
         return dir_listing

@@ -14,5 +14,5 @@ class Htpasswd:
         with htpasswd.Basic(self.full_path) as users_db:
             try:
                 users_db.add(self.user, self.password)
-            except:
+            except htpasswd.basic.UserExists:
                 pass

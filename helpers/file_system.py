@@ -14,14 +14,14 @@ class FileSystem:
             self.file_name = file_name
             self.path = self.dir_name + self.file_name
 
-    def create_dir(self):
+    def create_dir(self) -> None:
         Path(self.path).mkdir(parents=True, exist_ok=True)
 
-    def create_file(self):
+    def create_file(self) -> None:
         with open(self.path, mode='a'):
             pass
 
-    def remove_dir(self):
+    def remove_dir(self) -> None:
         try:
             shutil.rmtree(self.path)  # recursive remove dirs
         except FileNotFoundError:
@@ -30,11 +30,13 @@ class FileSystem:
     def remove_file(self):
         pass
 
-    def is_dir_exist(self):
-        os.path.isdir(self.path)
+    def is_dir_exist(self) -> bool:
+        is_dir_exist = os.path.isdir(self.path)
+        return is_dir_exist
 
-    def is_file_exist(self):
-        os.path.isfile(self.path)
+    def is_file_exist(self) -> bool:
+        is_file_exist = os.path.isfile(self.path)
+        return is_file_exist
 
     def get_dir_listing(self) -> list:
         dir_listing = os.listdir(self.path)

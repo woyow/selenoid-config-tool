@@ -158,3 +158,16 @@ mapping:
                   port:
                     type: int
                     required: true
+
+  teams-quota:
+    type: seq
+    required: false
+    sequence:
+      - type: map
+        mapping:
+          name:
+            type: str
+            required: true
+          password:
+            type: str
+            required: true

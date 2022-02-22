@@ -3,6 +3,7 @@ from helpers.http_requests import HttpRequests
 from helpers.file_generators import JsonGenerator
 from helpers.file_generators import YamlGenerator
 from helpers.file_system import FileSystem
+from helpers.htpasswd import Htpasswd
 
 from icecream import ic
 import json
@@ -247,7 +248,7 @@ class Configurator:
 
         # Parsing yaml config
         self.config_parser = ConfigParser()
-        self.browsers, self.aerokube, self.hosts = self.config_parser()
+        self.browsers, self.aerokube, self.hosts, self.teams = self.config_parser()
 
         # Pre-validation
         self._browser_count_check()
@@ -274,6 +275,11 @@ class Configurator:
         self.hosts_dict = self._get_default_hosts_dict()
         self._hosts_setter()
         ic(self.hosts_dict)
+
+        # Variables for teams from config
+        self.teams_dict = self._get_default_teams_dict()
+        self._teams_setter()
+        ic(self.teams_dict)
 
     def __call__(self) -> None:
         self.configurate()
@@ -335,6 +341,7 @@ class Configurator:
 
         self._create_browsers_json(ggr_hosts_paths, selenoid_hosts_paths, config_path)
         self._create_docker_compose_yaml(ggr_hosts_paths, selenoid_hosts_paths)
+        self._create_htpasswd_file(ggr_hosts_paths)
 
     def _create_browsers_json(self, ggr_hosts_paths: list, selenoid_hosts_paths: list, config_path: str) -> None:
         """ Create browsers.json file into ggr and selenoid dirs """
@@ -377,6 +384,27 @@ class Configurator:
                     docker_compose_dict,
                     path + '/' + file_name
                 ).yaml_data_dump_to_file()
+
+    def _create_htpasswd_file(self, ggr_hosts_paths):
+        file_name = 'users.htpasswd'
+        name_key = 'name'
+        pass_key = 'password'
+        teams_key = 'teams-quota'
+
+        if ggr_hosts_paths:
+            for path in ggr_hosts_paths:
+                host = path.split('/')[-1]
+                teams_object = self.teams_dict[teams_key]
+
+                count = len(teams_object)
+                for i in range(count):
+                    Htpasswd(
+                        dir_name=path,
+                        file_name=file_name,
+                        name=teams_object[i][name_key],
+                        password=teams_object[i][pass_key]
+                    ).add_user()
+
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
@@ -823,6 +851,43 @@ class Configurator:
 
         self.hosts_dict[image_type][counter][key][ip_key] = value_ip
         self.hosts_dict[image_type][counter][key][port_key] = value_port
+
+    def _get_default_teams_dict(self) -> dict:
+        """ Get default dictionary template for teams """
+
+        teams_dict = {
+            'teams-quota': [
+                {
+                    'name': None,
+                    'password': None
+                } for _ in range(len(self.teams))
+            ]
+        }
+
+        return teams_dict
+
+    def _teams_setter(self):
+        """ Set teams values from config """
+
+        teams_count = len(self.teams)
+        if teams_count > 0:
+            for count in range(teams_count):
+                team_object = self.teams[count]
+                args = (team_object, count)
+                self._set_teams_names(*args)
+                self._set_teams_passwords(*args)
+
+    def _set_teams_names(self, team_object: dict, count: int) -> None:
+        key = 'name'
+        teams_quota_key = 'teams-quota'
+        value = self.teams[count][key]
+        self.teams_dict[teams_quota_key][count][key] = value
+
+    def _set_teams_passwords(self, team_object: dict, count: int) -> None:
+        key = 'password'
+        teams_quota_key = 'teams-quota'
+        value = self.teams[count][key]
+        self.teams_dict[teams_quota_key][count][key] = value
 
     def _get_default_browsers_json_dict(self) -> dict:
 

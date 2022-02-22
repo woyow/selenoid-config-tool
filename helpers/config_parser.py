@@ -33,23 +33,33 @@ class ConfigParser(OpenFile):
         browsers = self.parse_browsers()
         aerokube = self.parse_aerokube()
         hosts = self.parse_hosts()
+        teams = self.parse_teams_quota()
 
         # ic(browsers)
         # ic(aerokube)
         # ic(hosts)
-        return browsers, aerokube, hosts
+        # ic(teams)
+        return browsers, aerokube, hosts, teams
 
-    def parse_browsers(self):
+    def parse_browsers(self) -> dict:
         browsers = self.config_file['browsers']
         return browsers
 
-    def parse_aerokube(self):
+    def parse_aerokube(self) -> dict:
         aerokube = self.config_file['aerokube']
         return aerokube
 
-    def parse_hosts(self):
+    def parse_hosts(self) -> dict:
         hosts = self.config_file['hosts']
         return hosts
 
-    def __del__(self):
+    def parse_teams_quota(self) -> dict:
+        try:
+            teams = self.config_file['teams-quota']
+        except KeyError:
+            teams = {}
+
+        return teams
+
+    def __del__(self) -> None:
         pass

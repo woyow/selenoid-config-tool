@@ -106,3 +106,15 @@ hosts:
     - ip: 111.111.111.114
       domain: example.com
       cpu-limit: 2
+
+
+# Config for teams/users quota
+teams-quota:
+  - name: QA_TEAM_1
+    password: test-selenoid-password
+
+  - name: QA_TEAM_2
+    password: test-selenoid-password-2
+
+  - name: DEV_TEAM_1
+    password: test-selenoid-password-3

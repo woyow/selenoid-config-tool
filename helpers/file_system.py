@@ -6,7 +6,12 @@ import shutil
 class FileSystem:
 
     def __init__(self, dir_name: str = None, file_name: str = None) -> None:
-        if dir_name:
+        if dir_name and file_name:
+            self.dir_name = dir_name
+            self.file_name = file_name
+            self.separator = '/'
+            self.path = self.dir_name + self.separator + self.file_name
+        elif dir_name:
             self.dir_name = dir_name
             self.path = self.dir_name
         elif file_name:

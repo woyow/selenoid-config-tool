@@ -1,14 +1,16 @@
-import htpasswd
 from helpers.file_system import FileSystem
+
+import htpasswd
+
 
 class Htpasswd:
 
-    def __init__(self, path: str, file_name: str, name: str, password: str) -> None:
+    def __init__(self, dir_name: str, file_name: str, name: str, password: str) -> None:
         self.dir_name = dir_name
         self.file_name = file_name
         self.name = name
         self.password = password
-        self.full_path = self.path + '/' + self.file_name
+        self.full_path = self.dir_name + '/' + self.file_name
 
     def add_user(self):
         FileSystem(

@@ -451,33 +451,38 @@ class Configurator:
         for i in range(self.count_of_all_browsers):
             browser_object = self.browsers[i]
             browser_name = browser_object['type']
+            use_key = 'use'
 
-            if browser_object['use']:
+            if browser_object[use_key]:
                 versions_key = 'versions'
+                range_key = 'range'
+                array_key = 'array'
+                latest_key = 'latest'
                 versions = self.browsers[i][versions_key]
 
-                if 'range' in versions:
+                if range_key in versions:
                     _range_handler(browser_name, versions, self.browsers_dict[browser_name][versions_key])
 
-                elif 'array' in versions:
+                elif array_key in versions:
                     _array_handler(browser_name, versions, self.browsers_dict[browser_name][versions_key])
 
-                elif 'latest' in versions:
+                elif latest_key in versions:
                     _latest_handler(browser_name, self.browsers_dict[browser_name][versions_key])
 
                 vnc, vnc_versions = _get_vnc_params(browser_object)
                 if vnc:
                     vnc_versions_key = 'vnc-versions'
-                    if 'range' in vnc_versions:
+                    highest_key = 'highest'
+                    if range_key in vnc_versions:
                         _range_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][vnc_versions_key])
 
-                    elif 'array' in vnc_versions:
+                    elif array_key in vnc_versions:
                         _array_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][vnc_versions_key])
 
-                    elif 'latest' in vnc_versions:
+                    elif latest_key in vnc_versions:
                         _latest_handler(browser_name, self.browsers_dict[browser_name][vnc_versions_key])
 
-                    elif 'highest' in vnc_versions:
+                    elif highest_key in vnc_versions:
                         _highest_handler(
                             self.browsers_dict[browser_name][versions_key],
                             self.browsers_dict[browser_name][vnc_versions_key]

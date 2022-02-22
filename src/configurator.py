@@ -6,6 +6,9 @@ from helpers.file_system import FileSystem
 from helpers.htpasswd import Htpasswd
 
 from icecream import ic
+from xml.etree.ElementTree import Element, SubElement, tostring, register_namespace
+from lxml import etree
+
 import json
 
 
@@ -259,6 +262,7 @@ class Configurator:
         self.browsers_dict = self._get_default_browsers_dict()
         self._set_browsers_versions()
         self._set_default_browsers_version()
+        ic(self.list_of_active_browsers)
         ic(self.browsers_dict)
 
         # Browser validations
@@ -272,6 +276,7 @@ class Configurator:
         ic(self.aerokube_dict)
 
         # Variables for hosts from config
+        ic(self.hosts)
         self.hosts_dict = self._get_default_hosts_dict()
         self._hosts_setter()
         ic(self.hosts_dict)
@@ -302,6 +307,8 @@ class Configurator:
         selenoid_key = 'selenoid'
         ip_key = 'ip'
         domain_key = 'domain'
+        region_key = 'region'
+        hosts_key = 'hosts'
 
         if ggr_key in self.hosts_dict:
             count = len(self.hosts_dict[ggr_key])
@@ -320,20 +327,27 @@ class Configurator:
             paths_for_remove.append(ggr_root_path)
 
         if 'selenoid' in self.hosts_dict:
-            count = len(self.hosts_dict[selenoid_key])
+            region_count = len(self.hosts_dict[selenoid_key])
+            ic(region_count)
+            for reg_count in range(region_count):
 
-            for i in range(count):
-                selenoid_object = self.hosts_dict[selenoid_key][i]
-
-                if selenoid_object[domain_key] or (selenoid_object[ip_key] and selenoid_object[domain_key]):
-                    selenoid_hosts_paths.append(selenoid_root_path + '/' + selenoid_object[domain_key])
-                elif selenoid_object[ip_key]:
-                    selenoid_hosts_paths.append(selenoid_root_path + '/' + selenoid_object[ip_key])
-
-                paths_for_create.append(selenoid_hosts_paths[i] + config_path)
+                selenoid_count = len(self.hosts_dict[selenoid_key][reg_count][region_key][hosts_key])
+                ic(selenoid_count)
+                for sel_count in range(selenoid_count):
+                    selenoid_object = self.hosts_dict[selenoid_key][reg_count][region_key][hosts_key][sel_count]
+                    ic(selenoid_object)
+                    if selenoid_object[domain_key] or (selenoid_object[ip_key] and selenoid_object[domain_key]):
+                        value = selenoid_root_path + '/' + selenoid_object[domain_key]
+                    elif selenoid_object[ip_key]:
+                        value = selenoid_root_path + '/' + selenoid_object[ip_key]
+                    selenoid_hosts_paths.append(value)
+                    ic(selenoid_hosts_paths)
+                    paths_for_create.append(value + config_path)
         else:
             paths_for_remove.append(selenoid_root_path)
 
+        ic(paths_for_create)
+        ic(paths_for_remove)
         _remove_old_dirs(ggr_root_path, ggr_hosts_paths)
         _remove_old_dirs(selenoid_root_path, selenoid_hosts_paths)
         _create_dirs(paths_for_create)
@@ -342,6 +356,7 @@ class Configurator:
         self._create_browsers_json(ggr_hosts_paths, selenoid_hosts_paths, config_path)
         self._create_docker_compose_yaml(ggr_hosts_paths, selenoid_hosts_paths)
         self._create_htpasswd_file(ggr_hosts_paths)
+        self._create_quota_files(ggr_hosts_paths)
 
     def _create_browsers_json(self, ggr_hosts_paths: list, selenoid_hosts_paths: list, config_path: str) -> None:
         """ Create browsers.json file into ggr and selenoid dirs """
@@ -366,6 +381,7 @@ class Configurator:
 
         ggr_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(ggr_image_type)
         selenoid_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(selenoid_image_type)
+        ic(selenoid_docker_compose_yaml_dict)
 
         if ggr_hosts_paths:
             for path in ggr_hosts_paths:
@@ -403,6 +419,43 @@ class Configurator:
                         name=teams_object[i][name_key],
                         password=teams_object[i][pass_key]
                     ).add_user()
+
+    def _create_quota_files(self, ggr_hosts_paths: dict) -> None:
+        # Namespace
+        # TODO: ?????????? <qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru"></qa:browsers>
+
+        # Browser template
+        browser = [None for i in range(5)]
+        browser_key = 'browser'
+        version_key = 'version'
+        region_key = 'region'
+        host_key = 'host'
+
+        browser_count = len(self.list_of_active_browsers)
+        browser = [None for i in range(browser_count)]
+
+        for i in range(browser_count):
+            current_browser_key = self.list_of_active_browsers[i]
+            browser_object = self.browsers_dict[current_browser_key]
+
+            browser[i] = Element(browser_key, {'name': f'{current_browser_key}', 'defaultVersion': f"{browser_object['default-version']}"})
+
+            all_versions_list = browser_object['versions'] + browser_object['vnc-versions']
+            version_count = len(all_versions_list)
+            version = [None for i in range(version_count)]
+            ic(all_versions_list, version_count)
+            for j in range(version_count):
+                version[j] = SubElement(browser[i], version_key, {'number': f'{all_versions_list[j]}'})
+                region = SubElement(version[j], region_key, {'name': 'eu-west'})
+                for k in range(1):
+                    region_child = SubElement(region, host_key, {
+                        'name': f'178.154.198.15{k}',
+                        'port': '4444',
+                        'count': '1'
+                    })
+
+        for i in range(browser_count):
+            ic(tostring(browser[i]))
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
@@ -657,6 +710,29 @@ class Configurator:
         hosts_dict = {
             'selenoid': [
                 {
+                    'region': {
+                        'name': None,
+                        'hosts': [
+                            {
+                                'ip': None,
+                                'domain': None,
+                                'count': None,
+                                'cpu-limit': None,
+                                'teams-quota': None,
+                                'vnc': {
+                                    'ip': None,
+                                    'port': None
+                                }
+                            } for _ in range(len(self.hosts['selenoid'][i]['region']['hosts']))
+                        ]
+                    }
+                } for i in range(len(self.hosts['selenoid']))
+            ]
+        }
+
+        old_hosts_dict = {
+            'selenoid': [
+                {
                     'ip': None,
                     'domain': None,
                     'count': None,
@@ -689,66 +765,57 @@ class Configurator:
 
         if 'ggr' in self.hosts:
             image_type = 'ggr'
-            ggr_length = len(self.hosts[image_type])
+            ggr_count = len(self.hosts[image_type])
 
-            for count in range(ggr_length):
+            for count in range(ggr_count):
                 hosts_object = self.hosts[image_type][count]
-                args = (hosts_object, image_type, count)
+                args = (hosts_object, image_type, None, count)
                 self._set_hosts_ip(*args)
                 self._set_hosts_domain(*args)
 
-        selenoid_length = len(self.hosts['selenoid'])
         image_type = 'selenoid'
+        region_key = 'region'
+        hosts_key = 'hosts'
+        region_count = len(self.hosts[image_type])
+        for reg_count in range(region_count):
+            hosts_object = self.hosts[image_type][reg_count][region_key]
+            args = (hosts_object, image_type, reg_count)
+            self._set_region_name(*args)
 
-        for count in range(selenoid_length):
-            hosts_object = self.hosts[image_type][count]
-            args = (hosts_object, image_type, count)
-            self._set_hosts_ip(*args)
-            # self._set_hosts_port(*args)  # port set in aerokube/selenoid/host-port
-            self._set_hosts_domain(*args)
-            self._set_hosts_count(*args)
-            self._set_hosts_cpu_limit(*args)
-            self._set_hosts_teams_quota(*args)
-            self._set_hosts_region_name(*args)
-            self._set_hosts_vnc(*args)
+            selenoid_count = len(self.hosts[image_type][reg_count][region_key][hosts_key])
 
-    def _set_hosts_ip(self, hosts_object: dict, image_type: str, counter: int) -> None:
-        """ Set 'ip' values into hosts dictionary """
+            for sel_count in range(selenoid_count):
+                hosts_object = self.hosts[image_type][reg_count][region_key][hosts_key][sel_count]
+                args = (hosts_object, image_type, reg_count, sel_count)
+                self._set_hosts_ip(*args)
+                self._set_hosts_domain(*args)
+                self._set_hosts_count(*args)
+                self._set_hosts_cpu_limit(*args)
+                self._set_hosts_teams_quota(*args)
+                self._set_hosts_vnc(*args)
 
-        key = 'ip'
-        images = ('ggr', 'selenoid')
+    def _set_region_name(self, hosts_object: dict, image_type: str, reg_counter: int):
+        """ Set region 'name' values into hosts dictionary """
+        key = 'name'
+        region_key = 'region'
 
-        _is_image_type_valid(image_type, images)
-
-        if key in hosts_object:
-            value = hosts_object[key]
-        else:
-            return
-
-        self.hosts_dict[image_type][counter][key] = value
-
-    def _set_hosts_port(self, hosts_object: dict, image_type: str, counter: int) -> None:
-        """ Set 'port' values into hosts dictionary """
-
-        key = 'port'
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
         if key in hosts_object:
             value = hosts_object[key]
-            if not 0 < value < 65535:
-                raise Exception(f'port value for {image_type}[{counter}] must be 0...65535')
-
         else:
-            value = 4444  # Default port for selenoid api
+            return
 
-        self.hosts_dict[image_type][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][region_key][key] = value
 
-    def _set_hosts_domain(self, hosts_object: dict, image_type: str, counter: int) -> None:
-        """ Set 'domain' values into hosts dictionary """
+    def _set_hosts_ip(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
+        """ Set 'ip' values into hosts dictionary """
+        key = 'ip'
+        region_key = 'region'
+        hosts_key = 'hosts'
 
-        key = 'domain'
         images = ('ggr', 'selenoid')
 
         _is_image_type_valid(image_type, images)
@@ -758,12 +825,37 @@ class Configurator:
         else:
             return
 
-        self.hosts_dict[image_type][counter][key] = value
+        if image_type == images[0]:
+            self.hosts_dict[image_type][counter][key] = value
+        else:
+            self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
 
-    def _set_hosts_count(self, hosts_object: dict, image_type: str, counter: int) -> None:
+    def _set_hosts_domain(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
+        """ Set 'domain' values into hosts dictionary """
+        key = 'domain'
+        region_key = 'region'
+        hosts_key = 'hosts'
+
+        images = ('ggr', 'selenoid')
+
+        _is_image_type_valid(image_type, images)
+
+        if key in hosts_object:
+            value = hosts_object[key]
+        else:
+            return
+
+        if image_type == images[0]:
+            self.hosts_dict[image_type][counter][key] = value
+        else:
+            self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+
+    def _set_hosts_count(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'count' values into hosts dictionary """
-
         key = 'count'
+        region_key = 'region'
+        hosts_key = 'hosts'
+
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
@@ -772,19 +864,21 @@ class Configurator:
             value = hosts_object[key]
 
             if not isinstance(value, int):
-                raise Exception(f'count priority for {image_type}[{counter}] must be of type integer')
+                raise Exception(f'count priority for {image_type}[{reg_counter}][{counter}] must be of type integer')
 
             if value < 1:
-                raise Exception(f'count priority for for {image_type}[{counter}] can not be less then 1')
+                raise Exception(f'count priority for for {image_type}[{reg_counter}][{counter}] can not be less then 1')
         else:
             value = 1  # Default value for load balancing priority
 
-        self.hosts_dict[image_type][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
 
-    def _set_hosts_cpu_limit(self, hosts_object: dict, image_type: str, counter: int) -> None:
+    def _set_hosts_cpu_limit(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'cpu-limit' values into hosts dictionary """
-
         key = 'cpu-limit'
+        region_key = 'region'
+        hosts_key = 'hosts'
+
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
@@ -800,12 +894,14 @@ class Configurator:
         else:
             value = 1  # Default value for cpu-limit
 
-        self.hosts_dict[image_type][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
 
-    def _set_hosts_teams_quota(self, hosts_object: dict, image_type: str, counter: int) -> None:
+    def _set_hosts_teams_quota(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'teams-quota' values into hosts dictionary """
-
         key = 'teams-quota'
+        region_key = 'region'
+        hosts_key = 'hosts'
+
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
@@ -816,30 +912,15 @@ class Configurator:
         else:
             return
 
-        self.hosts_dict[image_type][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
 
-    def _set_hosts_region_name(self, hosts_object: dict, image_type: str, counter: int) -> None:
-        """ Set 'region-name' values into hosts dictionary """
-
-        key = 'region-name'
-        images = 'selenoid'
-
-        _is_image_type_valid(image_type, images)
-
-        if key in hosts_object:
-            value = hosts_object[key]
-            value = _string_sanitize(value)
-        else:
-            return
-
-        self.hosts_dict[image_type][counter][key] = value
-
-    def _set_hosts_vnc(self, hosts_object: dict, image_type: str, counter: int) -> None:
+    def _set_hosts_vnc(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'vnc' values into hosts dictionary """
-
         key = 'vnc'
         ip_key = 'ip'
         port_key = 'port'
+        region_key = 'region'
+        hosts_key = 'hosts'
 
         images = 'selenoid'
 
@@ -852,8 +933,8 @@ class Configurator:
         else:
             return
 
-        self.hosts_dict[image_type][counter][key][ip_key] = value_ip
-        self.hosts_dict[image_type][counter][key][port_key] = value_port
+        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key][ip_key] = value_ip
+        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key][port_key] = value_port
 
     def _get_default_teams_dict(self) -> dict:
         """ Get default dictionary template for teams """
@@ -969,31 +1050,60 @@ class Configurator:
 
         return browsers_dict
 
+    def _get_priority_key_from_hosts_dict(self, host_object: dict) -> str:
+        """ Return host (ip or domain), domain more priority then ip """
+        ip_key = 'ip'
+        domain_key = 'domain'
+
+        if host_object[domain_key] or (host_object[ip_key] and host_object[domain_key]):
+            return domain_key
+        elif host_object[ip_key]:
+            return ip_key
+
     def _get_default_docker_compose_yaml_dict(self, image_type: str) -> dict:
         """ Get default template for docker-compose.yaml dict """
 
         ip_key = 'ip'
         domain_key = 'domain'
+        region_key = 'region'
+        hosts_key = 'hosts'
+
         docker_compose_dict = {}
 
         if image_type in self.hosts_dict:
-            count = len(self.hosts_dict[image_type])
-            for i in range(count):
-                image_object = self.hosts_dict[image_type][i]
+            if image_type == 'ggr':
+                count = len(self.hosts_dict[image_type])
+                for i in range(count):
+                    image_object = self.hosts_dict[image_type][i]
 
-                if image_object[domain_key] or (image_object[ip_key] and image_object[domain_key]):
-                    key = domain_key
-                elif image_object[ip_key]:
-                    key = ip_key
+                    key = self._get_priority_key_from_hosts_dict(image_object)
 
-                docker_compose_dict.update(
-                    {
-                        image_object[key]: {
-                            'version': '3',
-                            'services': {}
+                    docker_compose_dict.update(
+                        {
+                            image_object[key]: {
+                                'version': '3',
+                                'services': {}
+                            }
                         }
-                    }
-                )
+                    )
+
+            elif image_type == 'selenoid':
+                region_count = len(self.hosts_dict[image_type])
+                for reg_count in range(region_count):
+                    selenoid_count = len(self.hosts_dict[image_type][reg_count][region_key][hosts_key])
+                    for sel_count in range(selenoid_count):
+                        image_object = self.hosts_dict[image_type][reg_count][region_key][hosts_key][sel_count]
+
+                        key = self._get_priority_key_from_hosts_dict(image_object)
+
+                        docker_compose_dict.update(
+                            {
+                                image_object[key]: {
+                                    'version': '3',
+                                    'services': {}
+                                }
+                            }
+                        )
 
         return docker_compose_dict
 
@@ -1009,34 +1119,45 @@ class Configurator:
         host_port_key = 'host-port'
         image_version_key = 'image-version'
         cpu_limit_key = 'cpu-limit'
+        region_key = 'region'
+        hosts_key = 'hosts'
 
-        counter = 0
-        for host in docker_compose_dict:
-            if image_type == 'selenoid':
-                if selenoid_key in self.aerokube:
-                    selenoid_dict = {
-                        'selenoid': {
-                            'image': f"aerokube/selenoid:{self.aerokube_dict[selenoid_key][image_version_key]}",
-                            'network_mode': 'bridge',
-                            'ports': [
-                                f"{self.aerokube_dict[selenoid_key][host_port_key]}:"
-                                f"{self.aerokube_dict[selenoid_key][host_port_key]}"
-                            ],
-                            'volumes': [
-                                '/var/run/docker.sock:/var/run/docker.sock',
-                                './config/:/etc/selenoid/:ro'
-                            ],
-                            'command': [
-                                '-limit',
-                                f"{self.hosts_dict[selenoid_key][counter][cpu_limit_key]}",
-                                '-listen',
-                                f":{self.aerokube_dict[selenoid_key][host_port_key]}"
-                            ]
+        if image_type == 'selenoid':
+            if selenoid_key in self.aerokube:
+                region_count = len(self.hosts_dict[image_type])
+                for reg_count in range(region_count):
+                    selenoid_count = len(self.hosts_dict[image_type][reg_count][region_key][hosts_key])
+                    for sel_count in range(selenoid_count):
+                        host_object = self.hosts_dict[image_type][reg_count][region_key][hosts_key][sel_count]
+                        key = self._get_priority_key_from_hosts_dict(host_object)
+                        host = host_object[key]
+                        ic(image_type, host, docker_compose_dict)
+                        selenoid_dict = {
+                            'selenoid': {
+                                'image': f"aerokube/selenoid:{self.aerokube_dict[selenoid_key][image_version_key]}",
+                                'network_mode': 'bridge',
+                                'ports': [
+                                    f"{self.aerokube_dict[selenoid_key][host_port_key]}:"
+                                    f"{self.aerokube_dict[selenoid_key][host_port_key]}"
+                                ],
+                                'volumes': [
+                                    '/var/run/docker.sock:/var/run/docker.sock',
+                                    './config/:/etc/selenoid/:ro'
+                                ],
+                                'command': [
+                                    '-limit',
+                                    f"{host_object[cpu_limit_key]}",
+                                    '-listen',
+                                    f":{self.aerokube_dict[selenoid_key][host_port_key]}"
+                                ]
+                            }
                         }
-                    }
 
-                    docker_compose_dict[host][services_key].update(selenoid_dict)
+                        docker_compose_dict[host][services_key].update(selenoid_dict)
 
+        for host in docker_compose_dict:
+            ic(image_type, host, docker_compose_dict)
+            if image_type == 'selenoid':
                 if selenoid_ui_key in self.aerokube:
                     selenoid_ui_dict = {
                         'selenoid-ui': {
@@ -1105,7 +1226,5 @@ class Configurator:
                         }
                     }
                     docker_compose_dict[host][services_key].update(ggr_ui_dict)
-
-            counter += 1
 
         return docker_compose_dict

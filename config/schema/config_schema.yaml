@@ -134,30 +134,41 @@ mapping:
         sequence:
           - type: map
             mapping:
-              ip:
-                type: any # Change to ip in pykwalify 1.8.0+
-              domain:
-                type: str
-              port:
-                type: int
-              count:
-                type: int
-              cpu-limit:
-                type: int
-                required: true
-              teams-quota:
-                type: any
-              region-name:
-                type: str
-              vnc:
+              region:
                 type: map
+                required: true
                 mapping:
-                  ip:
-                    type: any # Change to ip in pykwalify 1.8.0+
+                  name:
+                    type: str
                     required: true
-                  port:
-                    type: int
+                  hosts:
+                    type: seq
                     required: true
+                    sequence:
+                      - type: map
+                        mapping:
+                          ip:
+                            type: any # Change to ip in pykwalify 1.8.0+
+                          domain:
+                            type: str
+                          port:
+                            type: int
+                          count:
+                            type: int
+                          cpu-limit:
+                            type: int
+                            required: true
+                          teams-quota:
+                            type: any
+                          vnc:
+                            type: map
+                            mapping:
+                              ip:
+                                type: any # Change to ip in pykwalify 1.8.0+
+                                required: true
+                              port:
+                                type: int
+                                required: true
 
   teams-quota:
     type: seq

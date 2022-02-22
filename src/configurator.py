@@ -393,7 +393,6 @@ class Configurator:
 
         if ggr_hosts_paths:
             for path in ggr_hosts_paths:
-                host = path.split('/')[-1]
                 teams_object = self.teams_dict[teams_key]
 
                 count = len(teams_object)
@@ -404,7 +403,6 @@ class Configurator:
                         name=teams_object[i][name_key],
                         password=teams_object[i][pass_key]
                     ).add_user()
-
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
@@ -868,22 +866,19 @@ class Configurator:
 
     def _teams_setter(self):
         """ Set teams values from config """
-
         teams_count = len(self.teams)
         if teams_count > 0:
             for count in range(teams_count):
-                team_object = self.teams[count]
-                args = (team_object, count)
-                self._set_teams_names(*args)
-                self._set_teams_passwords(*args)
+                self._set_teams_names(count)
+                self._set_teams_passwords(count)
 
-    def _set_teams_names(self, team_object: dict, count: int) -> None:
+    def _set_teams_names(self, count: int) -> None:
         key = 'name'
         teams_quota_key = 'teams-quota'
         value = self.teams[count][key]
         self.teams_dict[teams_quota_key][count][key] = value
 
-    def _set_teams_passwords(self, team_object: dict, count: int) -> None:
+    def _set_teams_passwords(self, count: int) -> None:
         key = 'password'
         teams_quota_key = 'teams-quota'
         value = self.teams[count][key]

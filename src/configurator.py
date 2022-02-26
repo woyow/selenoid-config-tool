@@ -243,7 +243,7 @@ def _remove_dirs(dir_array: list or str) -> None:
 
 
 class Configurator:
-
+    global_key = 'global'
     # ic.disable()
     ic.enable()
 
@@ -432,7 +432,7 @@ class Configurator:
         host_key = 'host'
 
         browser_count = len(self.list_of_active_browsers)
-        browser = [None for i in range(browser_count)]
+        browser = [None for _ in range(browser_count)]
 
         for i in range(browser_count):
             current_browser_key = self.list_of_active_browsers[i]
@@ -442,20 +442,43 @@ class Configurator:
 
             all_versions_list = browser_object['versions'] + browser_object['vnc-versions']
             version_count = len(all_versions_list)
-            version = [None for i in range(version_count)]
+            version = [None for _ in range(version_count)]
             ic(all_versions_list, version_count)
             for j in range(version_count):
                 version[j] = SubElement(browser[i], version_key, {'number': f'{all_versions_list[j]}'})
-                region = SubElement(version[j], region_key, {'name': 'eu-west'})
-                for k in range(1):
-                    region_child = SubElement(region, host_key, {
-                        'name': f'178.154.198.15{k}',
-                        'port': '4444',
-                        'count': '1'
-                    })
 
+                region_count = len(self.hosts_dict['selenoid'])
+                region = [None for _ in range(region_count)]
+                for k in range(region_count):
+                    region_object = self.hosts_dict['selenoid'][k]['region']
+                    ic(region_object)
+                    region_name = region_object['name']
+                    region[k] = SubElement(version[j], region_key, {'name': f'{region_name}'})
+
+                    hosts_count = len(region_object['hosts'])
+                    host = [None for _ in range(hosts_count)]
+                    for l in range(hosts_count):
+                        host_object = region_object['hosts'][l]
+                        host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
+                        name = host_object[host_primary_key]
+                        port = self.aerokube_dict['selenoid']['host-port']
+                        count = host_object['count']
+                        host[l] = SubElement(region[k], host_key, {
+                            'name': f'{name}',
+                            'port': f'{port}',
+                            'count': f'{count}'
+                        })
+
+        # TODO: xml helper + beatify code + create file into ggr dirs
         for i in range(browser_count):
-            ic(tostring(browser[i]))
+            x = etree.XML(tostring(browser[i]))
+            ic(x)
+            # b'<root>' + tostring(browser[i]) + b'</root'
+            xx = etree.tostring(x, pretty_print=True)
+            ic(xx)
+            with open('./test.xml', 'wb') as file:
+                file.write(xx)
+            #ic(tostring(browser[i]))
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """

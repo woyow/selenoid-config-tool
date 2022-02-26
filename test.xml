@@ -1,0 +1,14 @@
+<browser name="opera" defaultVersion="83.0">
+  <version number="83.0">
+    <region name="us-east">
+      <host name="111.111.111.111" port="4444" count="1"/>
+    </region>
+    <region name="us-west">
+      <host name="111.111.111.112" port="4444" count="1"/>
+      <host name="tests-us-west.dev.example.com" port="4444" count="3"/>
+    </region>
+    <region name="default">
+      <host name="example.com" port="4444" count="1"/>
+    </region>
+  </version>
+</browser>

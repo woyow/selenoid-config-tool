@@ -12,6 +12,57 @@ from lxml import etree
 import json
 
 
+""" YAML config keys """
+""" Common keys """
+_name_key = 'name'
+
+
+""" Browser keys """
+_browsers_key = 'browsers'
+_type_key = 'type'
+_use_key = 'use'
+_vnc_image_key = 'vnc-image'
+_enable_key = 'enable'
+_versions_key = 'versions'
+_vnc_versions_key = 'vnc-versions'
+_range_key = 'range'
+_min_key = 'min'
+_max_key = 'max'
+_ignore_key = 'ignore'
+_highest_key = 'highest'
+_latest_key = 'latest'
+_custom_key = 'custom'
+_array_key = 'array'
+_default_version_key = 'default-version'
+
+
+""" Aerokube keys """
+_aerokube_key = 'aerokube'
+_selenoid_key = 'selenoid'
+_selenoid_ui_key = 'selenoid-ui'
+_ggr_key = 'ggr'
+_ggr_ui_key = 'ggr-ui'
+_image_version_key = 'image-version'
+_host_port_key = 'host-port'
+_encrypt_connection_key = 'encrypt-connection'
+
+
+""" Hosts keys """
+_hosts_key = 'hosts'
+_region_key = 'region'
+_ip_key = 'ip'
+_domain_key = 'domain'
+_count_key = 'count'
+_cpu_limit_key = 'cpu-limit'
+_vnc_key = 'vnc'
+_port_key = 'port'
+
+
+""" Teams-quota keys """
+_teams_quota_key = 'teams-quota'
+_password_key = 'password'
+
+
 def _docker_hub_get_request(
         domain: str = None,
         method: str = None,
@@ -303,51 +354,44 @@ class Configurator:
         paths_for_create = []
         paths_for_remove = []
 
-        ggr_key = 'ggr'
-        selenoid_key = 'selenoid'
-        ip_key = 'ip'
-        domain_key = 'domain'
-        region_key = 'region'
-        hosts_key = 'hosts'
-
-        if ggr_key in self.hosts_dict:
-            count = len(self.hosts_dict[ggr_key])
+        if _ggr_key in self.hosts_dict:
+            count = len(self.hosts_dict[_ggr_key])
 
             for i in range(count):
-                ggr_object = self.hosts_dict[ggr_key][i]
+                ggr_object = self.hosts_dict[_ggr_key][i]
 
-                if ggr_object[domain_key] or (ggr_object[ip_key] and ggr_object[domain_key]):
-                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[domain_key])
-                elif ggr_object[ip_key]:
-                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[ip_key])
+                if ggr_object[_domain_key] or (ggr_object[_ip_key] and ggr_object[_domain_key]):
+                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[_domain_key])
+                elif ggr_object[_ip_key]:
+                    ggr_hosts_paths.append(ggr_root_path + '/' + ggr_object[_ip_key])
 
                 paths_for_create.append(ggr_hosts_paths[i] + config_path)
                 paths_for_create.append(ggr_hosts_paths[i] + quota_path)
         else:
             paths_for_remove.append(ggr_root_path)
 
-        if 'selenoid' in self.hosts_dict:
-            region_count = len(self.hosts_dict[selenoid_key])
+        if _selenoid_key in self.hosts_dict:
+            region_count = len(self.hosts_dict[_selenoid_key])
             ic(region_count)
             for reg_count in range(region_count):
 
-                selenoid_count = len(self.hosts_dict[selenoid_key][reg_count][region_key][hosts_key])
+                selenoid_count = len(self.hosts_dict[_selenoid_key][reg_count][_region_key][_hosts_key])
                 ic(selenoid_count)
                 for sel_count in range(selenoid_count):
-                    selenoid_object = self.hosts_dict[selenoid_key][reg_count][region_key][hosts_key][sel_count]
+                    selenoid_object = self.hosts_dict[_selenoid_key][reg_count][_region_key][_hosts_key][sel_count]
                     ic(selenoid_object)
-                    if selenoid_object[domain_key] or (selenoid_object[ip_key] and selenoid_object[domain_key]):
-                        value = selenoid_root_path + '/' + selenoid_object[domain_key]
-                    elif selenoid_object[ip_key]:
-                        value = selenoid_root_path + '/' + selenoid_object[ip_key]
+                    if selenoid_object[_domain_key] or (selenoid_object[_ip_key] and selenoid_object[_domain_key]):
+                        value = selenoid_root_path + '/' + selenoid_object[_domain_key]
+                    elif selenoid_object[_ip_key]:
+                        value = selenoid_root_path + '/' + selenoid_object[_ip_key]
                     selenoid_hosts_paths.append(value)
                     ic(selenoid_hosts_paths)
                     paths_for_create.append(value + config_path)
         else:
             paths_for_remove.append(selenoid_root_path)
 
-        ic(paths_for_create)
-        ic(paths_for_remove)
+        # ic(paths_for_create)
+        # ic(paths_for_remove)
         _remove_old_dirs(ggr_root_path, ggr_hosts_paths)
         _remove_old_dirs(selenoid_root_path, selenoid_hosts_paths)
         _create_dirs(paths_for_create)
@@ -403,82 +447,94 @@ class Configurator:
 
     def _create_htpasswd_file(self, ggr_hosts_paths):
         file_name = 'users.htpasswd'
-        name_key = 'name'
-        pass_key = 'password'
-        teams_key = 'teams-quota'
 
         if ggr_hosts_paths:
             for path in ggr_hosts_paths:
-                teams_object = self.teams_dict[teams_key]
+                teams_object = self.teams_dict[_teams_quota_key]
 
                 count = len(teams_object)
                 for i in range(count):
                     Htpasswd(
                         dir_name=path,
                         file_name=file_name,
-                        name=teams_object[i][name_key],
-                        password=teams_object[i][pass_key]
+                        name=teams_object[i][_name_key],
+                        password=teams_object[i][_password_key]
                     ).add_user()
 
     def _create_quota_files(self, ggr_hosts_paths: dict) -> None:
-        # Namespace
-        # TODO: ?????????? <qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru"></qa:browsers>
-
         # Browser template
-        browser = [None for i in range(5)]
-        browser_key = 'browser'
-        version_key = 'version'
-        region_key = 'region'
-        host_key = 'host'
+        browser_elem_key = 'browser'
+        version_elem_key = 'version'
+        region_elem_key = 'region'
+        host_elem_key = 'host'
 
         browser_count = len(self.list_of_active_browsers)
-        browser = [None for _ in range(browser_count)]
 
         for i in range(browser_count):
             current_browser_key = self.list_of_active_browsers[i]
             browser_object = self.browsers_dict[current_browser_key]
 
-            browser[i] = Element(browser_key, {'name': f'{current_browser_key}', 'defaultVersion': f"{browser_object['default-version']}"})
+            browser_elem_dict = {
+                'name': f'{current_browser_key}',
+                'defaultVersion': f"{browser_object['default-version']}"
+            }
+            browser_elem = Element(browser_elem_key, browser_elem_dict)
 
             all_versions_list = browser_object['versions'] + browser_object['vnc-versions']
             version_count = len(all_versions_list)
-            version = [None for _ in range(version_count)]
+
             ic(all_versions_list, version_count)
             for j in range(version_count):
-                version[j] = SubElement(browser[i], version_key, {'number': f'{all_versions_list[j]}'})
+                version_elem_dict = {
+                    'number': f'{all_versions_list[j]}'
+                }
+                version_elem = SubElement(browser_elem, version_elem_key, version_elem_dict)
 
                 region_count = len(self.hosts_dict['selenoid'])
-                region = [None for _ in range(region_count)]
                 for k in range(region_count):
                     region_object = self.hosts_dict['selenoid'][k]['region']
-                    ic(region_object)
                     region_name = region_object['name']
-                    region[k] = SubElement(version[j], region_key, {'name': f'{region_name}'})
+                    region_elem_dict = {
+                        'name': f'{region_name}'
+                    }
+                    region_elem = SubElement(version_elem, region_elem_key, region_elem_dict)
 
                     hosts_count = len(region_object['hosts'])
-                    host = [None for _ in range(hosts_count)]
                     for l in range(hosts_count):
                         host_object = region_object['hosts'][l]
+                        ic(host_object)
                         host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
-                        name = host_object[host_primary_key]
-                        port = self.aerokube_dict['selenoid']['host-port']
-                        count = host_object['count']
-                        host[l] = SubElement(region[k], host_key, {
-                            'name': f'{name}',
-                            'port': f'{port}',
-                            'count': f'{count}'
-                        })
+                        host_name = host_object[host_primary_key]
+                        host_port = self.aerokube_dict['selenoid']['host-port']
+                        host_count = host_object['count']
+                        host_elem_dict = {
+                            'name': f'{host_name}',
+                            'port': f'{host_port}',
+                            'count': f'{host_count}'
+                        }
+                        if host_object['vnc']['ip'] or host_object['vnc']['port']:
+                            ic(host_object)
+                            host_vnc_port = host_object['vnc']['port']
+                            host_elem_dict.update(
+                                {
+                                    'vnc': f'vnc://{host_name}:{host_vnc_port}'
+                                }
+                            )
+                        host_elem = SubElement(region_elem, host_elem_key, host_elem_dict)
 
-        # TODO: xml helper + beatify code + create file into ggr dirs
-        for i in range(browser_count):
-            x = etree.XML(tostring(browser[i]))
-            ic(x)
-            # b'<root>' + tostring(browser[i]) + b'</root'
-            xx = etree.tostring(x, pretty_print=True)
-            ic(xx)
-            with open('./test.xml', 'wb') as file:
-                file.write(xx)
-            #ic(tostring(browser[i]))
+            # TODO: xml helper + beatify code + create file into ggr dirs + quota for teams
+            xml_object = etree.XML(tostring(browser_elem))
+            pretty_xml_object = etree.tostring(xml_object, pretty_print=True)
+            with open('./test.xml', 'ab') as file:
+                if i == 0:
+                    # Workaround for namespace
+                    file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')
+
+                file.write(pretty_xml_object)
+
+                if i == (browser_count - 1):
+                    # Workaround for end namespace
+                    file.write(b'</qa:browsers>')  # Workaround
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """

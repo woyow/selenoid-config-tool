@@ -8,6 +8,7 @@ from helpers.config_parser import ConfigParser
 from src.configurator import Configurator
 from helpers.open_config_file import OpenFile
 
+
 def init() -> None:
     try:
         change_root_dir = ChangeRootDir()

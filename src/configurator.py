@@ -15,6 +15,8 @@ import json
 """ YAML config keys """
 """ Common keys """
 _name_key = 'name'
+_results_key = 'results'
+_services_key = 'services'
 
 
 """ Browser keys """
@@ -30,6 +32,7 @@ _min_key = 'min'
 _max_key = 'max'
 _ignore_key = 'ignore'
 _highest_key = 'highest'
+_minimal_key = 'minimal'
 _latest_key = 'latest'
 _custom_key = 'custom'
 _array_key = 'array'
@@ -476,45 +479,44 @@ class Configurator:
 
             browser_elem_dict = {
                 'name': f'{current_browser_key}',
-                'defaultVersion': f"{browser_object['default-version']}"
+                'defaultVersion': f"{browser_object[_default_version_key]}"
             }
             browser_elem = Element(browser_elem_key, browser_elem_dict)
 
-            all_versions_list = browser_object['versions'] + browser_object['vnc-versions']
+            all_versions_list = browser_object[_versions_key] + browser_object[_vnc_versions_key]
             version_count = len(all_versions_list)
 
-            ic(all_versions_list, version_count)
+            # ic(all_versions_list, version_count)
             for j in range(version_count):
                 version_elem_dict = {
                     'number': f'{all_versions_list[j]}'
                 }
                 version_elem = SubElement(browser_elem, version_elem_key, version_elem_dict)
 
-                region_count = len(self.hosts_dict['selenoid'])
+                region_count = len(self.hosts_dict[_selenoid_key])
                 for k in range(region_count):
-                    region_object = self.hosts_dict['selenoid'][k]['region']
-                    region_name = region_object['name']
+                    region_object = self.hosts_dict[_selenoid_key][k][_region_key]
+                    region_name = region_object[_name_key]
                     region_elem_dict = {
                         'name': f'{region_name}'
                     }
                     region_elem = SubElement(version_elem, region_elem_key, region_elem_dict)
 
-                    hosts_count = len(region_object['hosts'])
+                    hosts_count = len(region_object[_hosts_key])
                     for l in range(hosts_count):
-                        host_object = region_object['hosts'][l]
+                        host_object = region_object[_hosts_key][l]
                         ic(host_object)
                         host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
                         host_name = host_object[host_primary_key]
-                        host_port = self.aerokube_dict['selenoid']['host-port']
-                        host_count = host_object['count']
+                        host_port = self.aerokube_dict[_selenoid_key][_host_port_key]
+                        host_count = host_object[_count_key]
                         host_elem_dict = {
                             'name': f'{host_name}',
                             'port': f'{host_port}',
                             'count': f'{host_count}'
                         }
-                        if host_object['vnc']['ip'] or host_object['vnc']['port']:
-                            ic(host_object)
-                            host_vnc_port = host_object['vnc']['port']
+                        if host_object[_vnc_key][_ip_key] or host_object[_vnc_key][_port_key]:
+                            host_vnc_port = host_object[_vnc_key][_port_key]
                             host_elem_dict.update(
                                 {
                                     'vnc': f'vnc://{host_name}:{host_vnc_port}'
@@ -552,8 +554,8 @@ class Configurator:
 
         for i in range(self.count_of_all_browsers):
             browser_object = self.browsers[i]
-            browser_name = browser_object['type']
-            if self.browsers[i]['use'] is True:
+            browser_name = browser_object[_type_key]
+            if self.browsers[i][_use_key] is True:
                 browsers.append(browser_name)
 
         return browsers
@@ -582,53 +584,47 @@ class Configurator:
 
         for i in range(self.count_of_all_browsers):
             browser_object = self.browsers[i]
-            browser_name = browser_object['type']
-            use_key = 'use'
+            browser_name = browser_object[_type_key]
 
-            if browser_object[use_key]:
-                versions_key = 'versions'
-                range_key = 'range'
-                array_key = 'array'
-                latest_key = 'latest'
-                versions = self.browsers[i][versions_key]
+            if browser_object[_use_key]:
+                versions = self.browsers[i][_versions_key]
 
-                if range_key in versions:
-                    _range_handler(browser_name, versions, self.browsers_dict[browser_name][versions_key])
+                if _range_key in versions:
+                    _range_handler(browser_name, versions, self.browsers_dict[browser_name][_versions_key])
 
-                elif array_key in versions:
-                    _array_handler(browser_name, versions, self.browsers_dict[browser_name][versions_key])
+                elif _array_key in versions:
+                    _array_handler(browser_name, versions, self.browsers_dict[browser_name][_versions_key])
 
-                elif latest_key in versions:
-                    _latest_handler(browser_name, self.browsers_dict[browser_name][versions_key])
+                elif _latest_key in versions:
+                    _latest_handler(browser_name, self.browsers_dict[browser_name][_versions_key])
 
                 vnc, vnc_versions = _get_vnc_params(browser_object)
                 if vnc:
-                    vnc_versions_key = 'vnc-versions'
-                    highest_key = 'highest'
-                    if range_key in vnc_versions:
-                        _range_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][vnc_versions_key])
 
-                    elif array_key in vnc_versions:
-                        _array_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][vnc_versions_key])
+                    if _range_key in vnc_versions:
+                        _range_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][_vnc_versions_key])
 
-                    elif latest_key in vnc_versions:
-                        _latest_handler(browser_name, self.browsers_dict[browser_name][vnc_versions_key])
+                    elif _array_key in vnc_versions:
+                        _array_handler(browser_name, vnc_versions, self.browsers_dict[browser_name][_vnc_versions_key])
 
-                    elif highest_key in vnc_versions:
+                    elif _latest_key in vnc_versions:
+                        _latest_handler(browser_name, self.browsers_dict[browser_name][_vnc_versions_key])
+
+                    elif _highest_key in vnc_versions:
                         _highest_handler(
-                            self.browsers_dict[browser_name][versions_key],
-                            self.browsers_dict[browser_name][vnc_versions_key]
+                            self.browsers_dict[browser_name][_versions_key],
+                            self.browsers_dict[browser_name][_vnc_versions_key]
                         )
 
                     _validation_boundary_conditions(
                         browser_name,
-                        self.browsers_dict[browser_name][vnc_versions_key],
-                        self.browsers_dict[browser_name][versions_key]
+                        self.browsers_dict[browser_name][_vnc_versions_key],
+                        self.browsers_dict[browser_name][_versions_key]
                     )
 
                     _remove_same_values_from_array(
-                        self.browsers_dict[browser_name][vnc_versions_key],
-                        self.browsers_dict[browser_name][versions_key]
+                        self.browsers_dict[browser_name][_vnc_versions_key],
+                        self.browsers_dict[browser_name][_versions_key]
                     )
 
                     # if len(self.browsers_dict[browser_name][versions_key]) < 1:
@@ -636,33 +632,27 @@ class Configurator:
 
     def _set_default_browsers_version(self) -> None:
         """ Set 'default-version' values into browser's dictionary """
-        type_key = 'type'
-        default_version_key = 'default-version'
-        versions_key = 'versions'
-        vnc_versions_key = 'vnc-versions'
-        custom_key = 'custom'
-        highest_key = 'highest'
-        minimal_key = 'minimal'
 
         for i in range(len(self.browsers)):
             browser_object = self.browsers[i]
-            browser_name = browser_object[type_key]
-            default_version_object = browser_object[default_version_key]
+            browser_name = browser_object[_type_key]
+            default_version_object = browser_object[_default_version_key]
 
             versions_list = (
-                    self.browsers_dict[browser_name][versions_key] + self.browsers_dict[browser_name][vnc_versions_key]
+                    self.browsers_dict[browser_name][_versions_key] +
+                    self.browsers_dict[browser_name][_vnc_versions_key]
             )
 
             # ic(versions_list)
 
-            if custom_key in default_version_object:
-                value = default_version_object[custom_key]
-            elif highest_key in default_version_object:
+            if _custom_key in default_version_object:
+                value = default_version_object[_custom_key]
+            elif _highest_key in default_version_object:
                 value = max(versions_list)
-            elif minimal_key in default_version_object:
+            elif _minimal_key in default_version_object:
                 value = min(versions_list)
 
-            self.browsers_dict[browser_name][default_version_key] = value
+            self.browsers_dict[browser_name][_default_version_key] = value
 
     def _check_browser_existence_in_docker_registry(self) -> None:
         """ Validation: All browsers must exist in the docker registry """
@@ -674,11 +664,11 @@ class Configurator:
             {'page_size': page_size_default}
         )
 
-        images_count = response_body['count']
+        images_count = response_body[_count_key]
         available_browsers_in_registry = []
 
         for i in range(images_count):
-            browser_name = response_body['results'][i]['name']
+            browser_name = response_body[_results_key][i][_name_key]
             available_browsers_in_registry.append(browser_name)
 
         for i in range(len(self.list_of_active_browsers)):
@@ -706,12 +696,12 @@ class Configurator:
                 {'page_size': page_size_default}
             )
 
-            count = response_body['count']
+            count = response_body[_count_key]
             for i in range(count):
-                value = response_body['results'][i]['name']
+                value = response_body[_results_key][i][_name_key]
                 available_browsers_versions_in_registry[browser].append(value)
 
-            temp_versions_list = self.browsers_dict[browser]['versions']
+            temp_versions_list = self.browsers_dict[browser][_versions_key]
             length = len(temp_versions_list)
             for i in range(length):
                 version = str(temp_versions_list[i])
@@ -771,17 +761,17 @@ class Configurator:
         """ Set 'image-version' values into aerokube's dictionary """
 
         for image_name in self.aerokube_dict:
-            value = self.aerokube[image_name]['image-version']
-            self.aerokube_dict[image_name]['image-version'] = value
+            value = self.aerokube[image_name][_image_version_key]
+            self.aerokube_dict[image_name][_image_version_key] = value
 
     def _set_aerokube_host_ports(self) -> None:
         """ Set 'host-port' values into aerokube's dictionary """
 
         for image_name in self.aerokube_dict:
-            value = self.aerokube[image_name]['host-port']
+            value = self.aerokube[image_name][_host_port_key]
             if not 0 < value < 65535:
                 raise Exception(f'port value for aerokube/{image_name} must be 0...65535')
-            self.aerokube_dict[image_name]['host-port'] = value
+            self.aerokube_dict[image_name][_host_port_key] = value
 
     def _get_default_hosts_dict(self) -> dict:
         """ Get default dictionary template for hosts """
@@ -802,38 +792,21 @@ class Configurator:
                                     'ip': None,
                                     'port': None
                                 }
-                            } for _ in range(len(self.hosts['selenoid'][i]['region']['hosts']))
+                            } for _ in range(len(self.hosts[_selenoid_key][i][_region_key][_hosts_key]))
                         ]
                     }
-                } for i in range(len(self.hosts['selenoid']))
+                } for i in range(len(self.hosts[_selenoid_key]))
             ]
         }
 
-        old_hosts_dict = {
-            'selenoid': [
-                {
-                    'ip': None,
-                    'domain': None,
-                    'count': None,
-                    'cpu-limit': None,
-                    'teams-quota': None,
-                    'region-name': None,
-                    'vnc': {
-                        'ip': None,
-                        'port': None
-                    }
-                } for _ in range(len(self.hosts['selenoid']))
-            ]
-        }
-
-        if 'ggr' in self.hosts:
+        if _ggr_key in self.hosts:
             hosts_dict.update(
                 {
                     'ggr': [
                         {
                             'ip': None,
                             'domain': None
-                        } for _ in range(len(self.hosts['ggr']))
+                        } for _ in range(len(self.hosts[_ggr_key]))
                     ],
                 }
             )
@@ -853,18 +826,17 @@ class Configurator:
                 self._set_hosts_domain(*args)
 
         image_type = 'selenoid'
-        region_key = 'region'
-        hosts_key = 'hosts'
+
         region_count = len(self.hosts[image_type])
         for reg_count in range(region_count):
-            hosts_object = self.hosts[image_type][reg_count][region_key]
+            hosts_object = self.hosts[image_type][reg_count][_region_key]
             args = (hosts_object, image_type, reg_count)
             self._set_region_name(*args)
 
-            selenoid_count = len(self.hosts[image_type][reg_count][region_key][hosts_key])
+            selenoid_count = len(self.hosts[image_type][reg_count][_region_key][_hosts_key])
 
             for sel_count in range(selenoid_count):
-                hosts_object = self.hosts[image_type][reg_count][region_key][hosts_key][sel_count]
+                hosts_object = self.hosts[image_type][reg_count][_region_key][_hosts_key][sel_count]
                 args = (hosts_object, image_type, reg_count, sel_count)
                 self._set_hosts_ip(*args)
                 self._set_hosts_domain(*args)
@@ -875,72 +847,61 @@ class Configurator:
 
     def _set_region_name(self, hosts_object: dict, image_type: str, reg_counter: int):
         """ Set region 'name' values into hosts dictionary """
-        key = 'name'
-        region_key = 'region'
 
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _name_key in hosts_object:
+            value = hosts_object[_name_key]
         else:
             return
 
-        self.hosts_dict[image_type][reg_counter][region_key][key] = value
+        self.hosts_dict[image_type][reg_counter][_region_key][_name_key] = value
 
     def _set_hosts_ip(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'ip' values into hosts dictionary """
-        key = 'ip'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = ('ggr', 'selenoid')
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _ip_key in hosts_object:
+            value = hosts_object[_ip_key]
         else:
             return
 
         if image_type == images[0]:
-            self.hosts_dict[image_type][counter][key] = value
+            self.hosts_dict[image_type][counter][_ip_key] = value
         else:
-            self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+            self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_ip_key] = value
 
     def _set_hosts_domain(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'domain' values into hosts dictionary """
-        key = 'domain'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = ('ggr', 'selenoid')
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _domain_key in hosts_object:
+            value = hosts_object[_domain_key]
         else:
             return
 
         if image_type == images[0]:
-            self.hosts_dict[image_type][counter][key] = value
+            self.hosts_dict[image_type][counter][_domain_key] = value
         else:
-            self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+            self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_domain_key] = value
 
     def _set_hosts_count(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'count' values into hosts dictionary """
-        key = 'count'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _count_key in hosts_object:
+            value = hosts_object[_count_key]
 
             if not isinstance(value, int):
                 raise Exception(f'count priority for {image_type}[{reg_counter}][{counter}] must be of type integer')
@@ -950,20 +911,17 @@ class Configurator:
         else:
             value = 1  # Default value for load balancing priority
 
-        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_count_key] = value
 
     def _set_hosts_cpu_limit(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'cpu-limit' values into hosts dictionary """
-        key = 'cpu-limit'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _cpu_limit_key in hosts_object:
+            value = hosts_object[_cpu_limit_key]
 
             if not isinstance(value, int):
                 raise Exception(f'cpu-limit for {image_type}[{counter}] must be of type integer')
@@ -973,47 +931,39 @@ class Configurator:
         else:
             value = 1  # Default value for cpu-limit
 
-        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_cpu_limit_key] = value
 
     def _set_hosts_teams_quota(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'teams-quota' values into hosts dictionary """
-        key = 'teams-quota'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            value = hosts_object[key]
+        if _teams_quota_key in hosts_object:
+            value = hosts_object[_teams_quota_key]
             value = list(map(_string_sanitize, value))
         else:
             return
 
-        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key] = value
+        self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_teams_quota_key] = value
 
     def _set_hosts_vnc(self, hosts_object: dict, image_type: str, reg_counter: int, counter: int) -> None:
         """ Set 'vnc' values into hosts dictionary """
-        key = 'vnc'
-        ip_key = 'ip'
-        port_key = 'port'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         images = 'selenoid'
 
         _is_image_type_valid(image_type, images)
 
-        if key in hosts_object:
-            vnc_object = hosts_object[key]
-            value_ip = vnc_object[ip_key]
-            value_port = vnc_object[port_key]
+        if _vnc_key in hosts_object:
+            vnc_object = hosts_object[_vnc_key]
+            value_ip = vnc_object[_ip_key]
+            value_port = vnc_object[_port_key]
         else:
             return
 
-        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key][ip_key] = value_ip
-        self.hosts_dict[image_type][reg_counter][region_key][hosts_key][counter][key][port_key] = value_port
+        self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_vnc_key][_ip_key] = value_ip
+        self.hosts_dict[image_type][reg_counter][_region_key][_hosts_key][counter][_vnc_key][_port_key] = value_port
 
     def _get_default_teams_dict(self) -> dict:
         """ Get default dictionary template for teams """
@@ -1038,16 +988,12 @@ class Configurator:
                 self._set_teams_passwords(count)
 
     def _set_teams_names(self, count: int) -> None:
-        key = 'name'
-        teams_quota_key = 'teams-quota'
-        value = self.teams[count][key]
-        self.teams_dict[teams_quota_key][count][key] = value
+        value = self.teams[count][_name_key]
+        self.teams_dict[_teams_quota_key][count][_name_key] = value
 
     def _set_teams_passwords(self, count: int) -> None:
-        key = 'password'
-        teams_quota_key = 'teams-quota'
-        value = self.teams[count][key]
-        self.teams_dict[teams_quota_key][count][key] = value
+        value = self.teams[count][_password_key]
+        self.teams_dict[_teams_quota_key][count][_password_key] = value
 
     def _get_default_browsers_json_dict(self) -> dict:
 
@@ -1065,7 +1011,7 @@ class Configurator:
         versions = ('versions', 'vnc-versions')
 
         for browser in self.browsers_dict:
-            browsers_dict[browser]['default'] = str(self.browsers_dict[browser]['default-version'])
+            browsers_dict[browser]['default'] = str(self.browsers_dict[browser][_default_version_key])
 
             for version_key in versions:
                 for version in self.browsers_dict[browser][version_key]:
@@ -1079,7 +1025,7 @@ class Configurator:
                     else:
                         image = f'selenoid/{browser}:{version}'
 
-                    port = f"{self.aerokube['selenoid']['host-port']}"
+                    port = f"{self.aerokube[_selenoid_key][_host_port_key]}"
                     path = '/'
                     env = None
                     tmpfs = None
@@ -1131,21 +1077,14 @@ class Configurator:
 
     def _get_priority_key_from_hosts_dict(self, host_object: dict) -> str:
         """ Return host (ip or domain), domain more priority then ip """
-        ip_key = 'ip'
-        domain_key = 'domain'
 
-        if host_object[domain_key] or (host_object[ip_key] and host_object[domain_key]):
-            return domain_key
-        elif host_object[ip_key]:
-            return ip_key
+        if host_object[_domain_key] or (host_object[_ip_key] and host_object[_domain_key]):
+            return _domain_key
+        elif host_object[_ip_key]:
+            return _ip_key
 
     def _get_default_docker_compose_yaml_dict(self, image_type: str) -> dict:
         """ Get default template for docker-compose.yaml dict """
-
-        ip_key = 'ip'
-        domain_key = 'domain'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         docker_compose_dict = {}
 
@@ -1169,9 +1108,9 @@ class Configurator:
             elif image_type == 'selenoid':
                 region_count = len(self.hosts_dict[image_type])
                 for reg_count in range(region_count):
-                    selenoid_count = len(self.hosts_dict[image_type][reg_count][region_key][hosts_key])
+                    selenoid_count = len(self.hosts_dict[image_type][reg_count][_region_key][_hosts_key])
                     for sel_count in range(selenoid_count):
-                        image_object = self.hosts_dict[image_type][reg_count][region_key][hosts_key][sel_count]
+                        image_object = self.hosts_dict[image_type][reg_count][_region_key][_hosts_key][sel_count]
 
                         key = self._get_priority_key_from_hosts_dict(image_object)
 
@@ -1190,34 +1129,24 @@ class Configurator:
         """ Generate docker-compose.yaml dict """
 
         docker_compose_dict = self._get_default_docker_compose_yaml_dict(image_type)
-        services_key = 'services'
-        selenoid_key = 'selenoid'
-        selenoid_ui_key = 'selenoid-ui'
-        ggr_key = 'ggr'
-        ggr_ui_key = 'ggr-ui'
-        host_port_key = 'host-port'
-        image_version_key = 'image-version'
-        cpu_limit_key = 'cpu-limit'
-        region_key = 'region'
-        hosts_key = 'hosts'
 
         if image_type == 'selenoid':
-            if selenoid_key in self.aerokube:
+            if _selenoid_key in self.aerokube:
                 region_count = len(self.hosts_dict[image_type])
                 for reg_count in range(region_count):
-                    selenoid_count = len(self.hosts_dict[image_type][reg_count][region_key][hosts_key])
+                    selenoid_count = len(self.hosts_dict[image_type][reg_count][_region_key][_hosts_key])
                     for sel_count in range(selenoid_count):
-                        host_object = self.hosts_dict[image_type][reg_count][region_key][hosts_key][sel_count]
+                        host_object = self.hosts_dict[image_type][reg_count][_region_key][_hosts_key][sel_count]
                         key = self._get_priority_key_from_hosts_dict(host_object)
                         host = host_object[key]
                         ic(image_type, host, docker_compose_dict)
                         selenoid_dict = {
                             'selenoid': {
-                                'image': f"aerokube/selenoid:{self.aerokube_dict[selenoid_key][image_version_key]}",
+                                'image': f"aerokube/selenoid:{self.aerokube_dict[_selenoid_key][_image_version_key]}",
                                 'network_mode': 'bridge',
                                 'ports': [
-                                    f"{self.aerokube_dict[selenoid_key][host_port_key]}:"
-                                    f"{self.aerokube_dict[selenoid_key][host_port_key]}"
+                                    f"{self.aerokube_dict[_selenoid_key][_host_port_key]}:"
+                                    f"{self.aerokube_dict[_selenoid_key][_host_port_key]}"
                                 ],
                                 'volumes': [
                                     '/var/run/docker.sock:/var/run/docker.sock',
@@ -1225,49 +1154,49 @@ class Configurator:
                                 ],
                                 'command': [
                                     '-limit',
-                                    f"{host_object[cpu_limit_key]}",
+                                    f"{host_object[_cpu_limit_key]}",
                                     '-listen',
-                                    f":{self.aerokube_dict[selenoid_key][host_port_key]}"
+                                    f":{self.aerokube_dict[_selenoid_key][_host_port_key]}"
                                 ]
                             }
                         }
 
-                        docker_compose_dict[host][services_key].update(selenoid_dict)
+                        docker_compose_dict[host][_services_key].update(selenoid_dict)
 
         for host in docker_compose_dict:
             ic(image_type, host, docker_compose_dict)
             if image_type == 'selenoid':
-                if selenoid_ui_key in self.aerokube:
+                if _selenoid_ui_key in self.aerokube:
                     selenoid_ui_dict = {
                         'selenoid-ui': {
-                            'image': f"aerokube/selenoid-ui:{self.aerokube_dict[selenoid_ui_key][image_version_key]}",
+                            'image': f"aerokube/selenoid-ui:{self.aerokube_dict[_selenoid_ui_key][_image_version_key]}",
                             'network_mode': 'bridge',
                             'ports': [
-                                f"{self.aerokube_dict[selenoid_ui_key][host_port_key]}:"
-                                f"{self.aerokube_dict[selenoid_ui_key][host_port_key]}"
+                                f"{self.aerokube_dict[_selenoid_ui_key][_host_port_key]}:"
+                                f"{self.aerokube_dict[_selenoid_ui_key][_host_port_key]}"
                             ],
                             'links': [
                                 'selenoid'
                             ],
                             'command': [
                                 '--selenoid-uri',
-                                f"http://{selenoid_key}:{self.aerokube_dict[selenoid_key][host_port_key]}",
+                                f"http://{_selenoid_key}:{self.aerokube_dict[_selenoid_key][_host_port_key]}",
                                 '-listen',
-                                f":{self.aerokube_dict[selenoid_ui_key][host_port_key]}"
+                                f":{self.aerokube_dict[_selenoid_ui_key][_host_port_key]}"
                             ]
                         }
                     }
-                    docker_compose_dict[host][services_key].update(selenoid_ui_dict)
+                    docker_compose_dict[host][_services_key].update(selenoid_ui_dict)
 
             elif image_type == 'ggr':
-                if ggr_key in self.aerokube:
+                if _ggr_key in self.aerokube:
                     ggr_dict = {
                         'ggr': {
                             'restart': 'always',
-                            'image': f"aerokube/ggr:{self.aerokube_dict[ggr_key][image_version_key]}",
+                            'image': f"aerokube/ggr:{self.aerokube_dict[_ggr_key][_image_version_key]}",
                             'ports': [
-                                f"{self.aerokube_dict[ggr_key][host_port_key]}:"
-                                f"{self.aerokube_dict[ggr_key][host_port_key]}"
+                                f"{self.aerokube_dict[_ggr_key][_host_port_key]}:"
+                                f"{self.aerokube_dict[_ggr_key][_host_port_key]}"
                             ],
                             'volumes': [
                                 './:/etc/grid-router:ro'
@@ -1276,19 +1205,19 @@ class Configurator:
                                 '-quotaDir',
                                 '/etc/grid-router/quota',
                                 '-listen',
-                                f":{self.aerokube_dict[ggr_key][host_port_key]}"
+                                f":{self.aerokube_dict[_ggr_key][_host_port_key]}"
                             ]
                         }
                     }
-                    docker_compose_dict[host][services_key].update(ggr_dict)
+                    docker_compose_dict[host][_services_key].update(ggr_dict)
 
-                if ggr_ui_key in self.aerokube:
+                if _ggr_ui_key in self.aerokube:
                     ggr_ui_dict = {
                         'ggr-ui': {
-                            'image': f"aerokube/ggr:{self.aerokube_dict[ggr_key][image_version_key]}",
+                            'image': f"aerokube/ggr:{self.aerokube_dict[_ggr_key][_image_version_key]}",
                             'ports': [
-                                f"{self.aerokube_dict[ggr_ui_key][host_port_key]}:"
-                                f"{self.aerokube_dict[ggr_ui_key][host_port_key]}"
+                                f"{self.aerokube_dict[_ggr_ui_key][_host_port_key]}:"
+                                f"{self.aerokube_dict[_ggr_ui_key][_host_port_key]}"
                             ],
                             'links': [
                                 'ggr'
@@ -1300,10 +1229,10 @@ class Configurator:
                                 '-quota-dir',
                                 '/etc/grid-router/quota',
                                 '-listen',
-                                f":{self.aerokube_dict[ggr_ui_key][host_port_key]}"
+                                f":{self.aerokube_dict[_ggr_ui_key][_host_port_key]}"
                             ]
                         }
                     }
-                    docker_compose_dict[host][services_key].update(ggr_ui_dict)
+                    docker_compose_dict[host][_services_key].update(ggr_ui_dict)
 
         return docker_compose_dict

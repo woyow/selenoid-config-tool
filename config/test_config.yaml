@@ -64,7 +64,7 @@ aerokube:
 
   ggr: # load balancer
     image-version: latest # not secure, use fix version!
-    host-port: 4444
+    host-port: 4040
     encrypt-connection: false
 
   ggr-ui: # web user interface

@@ -465,12 +465,31 @@ class Configurator:
                     ).add_user()
 
     def _create_quota_files(self, ggr_hosts_paths: dict) -> None:
+        """ Create quota files for ggr """
+        ic(ggr_hosts_paths)
+        for ggr_path in ggr_hosts_paths:
+            for i in range(len(self.teams_dict['teams-quota'])):
+                ic(ggr_path + '/' + 'quota/' + self.teams_dict['teams-quota'][i]['name'] + '.xml')
+                file_name = self.teams_dict['teams-quota'][i]['name']
+                file_path = ggr_path + '/quota/' + file_name + '.xml'
+
+                # host_object = self.hosts_dict[_selenoid_key][_region_key]
+                # if host_object[_teams_quota_key] and file_name in host_object[_teams_quota_key]
+
+                with open(file_path, 'wb') as file:
+                    file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')
+                    xml_object = self._xml_generator(file_name)
+                    file.write(xml_object)
+                    file.write(b'</qa:browsers>')
+
+    def _xml_generator(self, team_name):
         # Browser template
         browser_elem_key = 'browser'
         version_elem_key = 'version'
         region_elem_key = 'region'
         host_elem_key = 'host'
 
+        pretty_xml_object = b''
         browser_count = len(self.list_of_active_browsers)
 
         for i in range(browser_count):
@@ -505,38 +524,35 @@ class Configurator:
                     hosts_count = len(region_object[_hosts_key])
                     for l in range(hosts_count):
                         host_object = region_object[_hosts_key][l]
-                        ic(host_object)
-                        host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
-                        host_name = host_object[host_primary_key]
-                        host_port = self.aerokube_dict[_selenoid_key][_host_port_key]
-                        host_count = host_object[_count_key]
-                        host_elem_dict = {
-                            'name': f'{host_name}',
-                            'port': f'{host_port}',
-                            'count': f'{host_count}'
-                        }
-                        if host_object[_vnc_key][_ip_key] or host_object[_vnc_key][_port_key]:
-                            host_vnc_port = host_object[_vnc_key][_port_key]
-                            host_elem_dict.update(
-                                {
-                                    'vnc': f'vnc://{host_name}:{host_vnc_port}'
-                                }
-                            )
-                        host_elem = SubElement(region_elem, host_elem_key, host_elem_dict)
+                        ic(host_object[_teams_quota_key])
+                        if host_object[_teams_quota_key] and team_name in host_object[_teams_quota_key]:
+                            # ic(host_object)
+                            host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
+                            host_name = host_object[host_primary_key]
+                            host_port = self.aerokube_dict[_selenoid_key][_host_port_key]
+                            host_count = host_object[_count_key]
+                            host_elem_dict = {
+                                'name': f'{host_name}',
+                                'port': f'{host_port}',
+                                'count': f'{host_count}'
+                            }
+                            if host_object[_vnc_key][_ip_key] or host_object[_vnc_key][_port_key]:
+                                host_vnc_port = host_object[_vnc_key][_port_key]
+                                host_elem_dict.update(
+                                    {
+                                        'vnc': f'vnc://{host_name}:{host_vnc_port}'
+                                    }
+                                )
+                            SubElement(region_elem, host_elem_key, host_elem_dict)
+                        else:
+                            continue
 
-            # TODO: xml helper + beatify code + create file into ggr dirs + quota for teams
             xml_object = etree.XML(tostring(browser_elem))
-            pretty_xml_object = etree.tostring(xml_object, pretty_print=True)
-            with open('./test.xml', 'ab') as file:
-                if i == 0:
-                    # Workaround for namespace
-                    file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')
+            pretty_xml_object += etree.tostring(xml_object, pretty_print=True)
 
-                file.write(pretty_xml_object)
+        ic(pretty_xml_object)
+        return pretty_xml_object
 
-                if i == (browser_count - 1):
-                    # Workaround for end namespace
-                    file.write(b'</qa:browsers>')  # Workaround
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
@@ -943,6 +959,7 @@ class Configurator:
         if _teams_quota_key in hosts_object:
             value = hosts_object[_teams_quota_key]
             value = list(map(_string_sanitize, value))
+            value = list(set(value))  # Unique values in list
         else:
             return
 
@@ -1214,7 +1231,7 @@ class Configurator:
                 if _ggr_ui_key in self.aerokube:
                     ggr_ui_dict = {
                         'ggr-ui': {
-                            'image': f"aerokube/ggr:{self.aerokube_dict[_ggr_key][_image_version_key]}",
+                            'image': f"aerokube/ggr-ui:{self.aerokube_dict[_ggr_ui_key][_image_version_key]}",
                             'ports': [
                                 f"{self.aerokube_dict[_ggr_ui_key][_host_port_key]}:"
                                 f"{self.aerokube_dict[_ggr_ui_key][_host_port_key]}"

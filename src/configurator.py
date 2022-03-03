@@ -1052,7 +1052,7 @@ class Configurator:
                     sysctl = None
                     shm_size = None
                     cpu = None
-                    mem = '128m'
+                    mem = None
 
                     if image:
                         browsers_dict[browser]['versions'][version]['image'] = image

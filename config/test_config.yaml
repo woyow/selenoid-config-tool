@@ -95,12 +95,12 @@ hosts:
           - ip: 111.111.111.112
             count: 1 # load balancing priority
             cpu-limit: 8 # 1 CPU = 1 browser session
-            teams-quota: [ QA_TEAM_1 ] # quota for ggr config
+            teams-quota: [] # quota for ggr config
 
           - domain: tests-us-west.dev.example.com
             count: 3 # load balancing priority
             cpu-limit: 3 # 1 CPU = 1 browser session
-            teams-quota: [ DEV_TEAM_1 ] # quota for ggr config
+            teams-quota: [] # quota for ggr config
             vnc:
               ip: 111.111.111.113
               port: 6900
@@ -113,7 +113,6 @@ hosts:
             cpu-limit: 2
           - ip: 127.0.0.1
             cpu-limit: 6
-            teams-quota: [ QA_TEAM_1, QA_TEAM_2, DEV_TEAM_1 ]
 
 
 # Config for teams/users quota

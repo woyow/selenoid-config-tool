@@ -466,15 +466,11 @@ class Configurator:
 
     def _create_quota_files(self, ggr_hosts_paths: dict) -> None:
         """ Create quota files for ggr """
-        ic(ggr_hosts_paths)
-        for ggr_path in ggr_hosts_paths:
-            for i in range(len(self.teams_dict['teams-quota'])):
-                ic(ggr_path + '/' + 'quota/' + self.teams_dict['teams-quota'][i]['name'] + '.xml')
-                file_name = self.teams_dict['teams-quota'][i]['name']
-                file_path = ggr_path + '/quota/' + file_name + '.xml'
 
-                # host_object = self.hosts_dict[_selenoid_key][_region_key]
-                # if host_object[_teams_quota_key] and file_name in host_object[_teams_quota_key]
+        for ggr_path in ggr_hosts_paths:
+            for i in range(len(self.teams_dict[_teams_quota_key])):  # TODO: Remove old team, if xml-file exist
+                file_name = self.teams_dict[_teams_quota_key][i][_name_key]
+                file_path = ggr_path + '/quota/' + file_name + '.xml'
 
                 with open(file_path, 'wb') as file:
                     file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')
@@ -524,7 +520,6 @@ class Configurator:
                     hosts_count = len(region_object[_hosts_key])
                     for l in range(hosts_count):
                         host_object = region_object[_hosts_key][l]
-                        ic(host_object[_teams_quota_key])
                         if host_object[_teams_quota_key] and team_name in host_object[_teams_quota_key]:
                             # ic(host_object)
                             host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
@@ -540,7 +535,7 @@ class Configurator:
                                 host_vnc_port = host_object[_vnc_key][_port_key]
                                 host_elem_dict.update(
                                     {
-                                        'vnc': f'vnc://{host_name}:{host_vnc_port}'
+                                        'vnc': f'vnc://{host_name}:{host_vnc_port}'  # TODO: fix it
                                     }
                                 )
                             SubElement(region_elem, host_elem_key, host_elem_dict)
@@ -550,7 +545,7 @@ class Configurator:
             xml_object = etree.XML(tostring(browser_elem))
             pretty_xml_object += etree.tostring(xml_object, pretty_print=True)
 
-        ic(pretty_xml_object)
+        # ic(pretty_xml_object)
         return pretty_xml_object
 
 

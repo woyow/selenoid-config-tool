@@ -301,13 +301,14 @@ def _get_priority_key_from_hosts_dict(host_object: dict) -> str:
 
     The static method can be used for a hosts dictionary
 
-    NOTE: domain_key more priority then ip_key
+    NOTE: domain_key more priority than ip_key
     """
 
     if host_object[_domain_key] or (host_object[_ip_key] and host_object[_domain_key]):
         return _domain_key
     elif host_object[_ip_key]:
         return _ip_key
+
 
 class Configurator:
     ic.disable()
@@ -477,7 +478,7 @@ class Configurator:
                         password=teams_object[i][_password_key]
                     ).add_user()
 
-    def _create_quota_files(self, ggr_hosts_paths: dict) -> None:
+    def _create_quota_files(self, ggr_hosts_paths: list) -> None:
         """ Create quota files for ggr """
 
         for ggr_path in ggr_hosts_paths:
@@ -532,8 +533,8 @@ class Configurator:
                     region_elem = SubElement(version_elem, region_elem_key, region_elem_dict)
 
                     hosts_count = len(region_object[_hosts_key])
-                    for l in range(hosts_count):
-                        host_object = region_object[_hosts_key][l]
+                    for ll in range(hosts_count):
+                        host_object = region_object[_hosts_key][ll]
                         if host_object[_teams_quota_key] and team_name in host_object[_teams_quota_key]:
                             host_primary_key = _get_priority_key_from_hosts_dict(host_object)
                             host_name = host_object[host_primary_key]
@@ -560,7 +561,6 @@ class Configurator:
 
         # ic(pretty_xml_object)
         return pretty_xml_object
-
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """

@@ -17,6 +17,7 @@ Automatically generating directories and `browsers.json`, `docker-compose.yaml`,
   - [x] standart parameters for selenoid
   - [ ] optional parameters for selenoid
   - [ ] shell-script for pull browser images from browsers-config
+- [ ] Dockerfile (for usage tool into docker)
 
 # Usage
 ## Download tool
@@ -133,16 +134,20 @@ teams-quota: # [optional] - if use ggr balancer
 cd ~/selenoid-config-tool
 chmod u+x ./sctool
 ```
-### 2. Default usage
+### 2. Install requirements
+```bash
+python3 -m pip install -r requirements.txt
+```
+### 3. Default usage
 ```bash
 ./sctool
 ```
-### 3. Usage with parameters
-#### 3.1 Get help
+### 4. Usage with parameters
+#### 4.1 Get help
 ```bash
 ./sctool --help
 ```
-#### 3.2 Run with custom parameters
+#### 4.2 Run with custom parameters
 ```bash
 ./sctool --results-dir ./your-results-dir --config-dir ./your-config-dir
 # or

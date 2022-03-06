@@ -515,13 +515,13 @@ class Configurator:
                     region_elem_dict = {
                         'name': f'{region_name}'
                     }
+
                     region_elem = SubElement(version_elem, region_elem_key, region_elem_dict)
 
                     hosts_count = len(region_object[_hosts_key])
                     for l in range(hosts_count):
                         host_object = region_object[_hosts_key][l]
                         if host_object[_teams_quota_key] and team_name in host_object[_teams_quota_key]:
-                            # ic(host_object)
                             host_primary_key = self._get_priority_key_from_hosts_dict(host_object)
                             host_name = host_object[host_primary_key]
                             host_port = self.aerokube_dict[_selenoid_key][_host_port_key]

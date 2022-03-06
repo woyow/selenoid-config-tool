@@ -1,7 +1,7 @@
 # selenoid-config-tool
 [![Linux only](https://www.kernel.org/theme/images/logos/favicon.png)]() **Only Linux support ;)**
 
-Tool for selenoid and ggr configs management. 
+Tool for [selenoid](https://github.com/aerokube/selenoid) and [ggr](https://github.com/aerokube/ggr) configs management. 
 Automatically generating directories and `browsers.json`, `docker-compose.yaml`, `users.htpasswd` and `quota` files for selenoid and ggr.
 
 # Features:

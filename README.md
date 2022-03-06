@@ -6,19 +6,20 @@ Automatically generating directories and `browsers.json`, `docker-compose.yaml`,
 ## Download tool
 1. Clone repository
 ```bash
-[~] $ git clone git@github.com:woyow/selenoid-config-tool.git
+cd ~
+git clone git@github.com:woyow/selenoid-config-tool.git
 ```
 2. Go to folder with tool
 ```bash
-[~] $ cd ./selenoid-config-tool
+cd ~/selenoid-config-tool
 ```
 
 ## Fill config file
 
 ### 1. Create config.yaml file
 ```bash
-[~/selenoid-config-tool] $ cd ./config
-[~/selenoid-config-tool/config] $ touch ./config.yaml
+cd ~/selenoid-config-tool/config
+touch ./config.yaml
 ```
 
 ### 2. Fill browsers array
@@ -113,6 +114,6 @@ teams-quota: # [optional] - if use ggr balancer
 ## Results
 ### 1. Change to the directory with the results
 ```bash
-[~/selenoid-config-tool] $ cd ./results
+cd ~/selenoid-config-tool/results
 ```
 ### 2. Ready!

@@ -18,7 +18,7 @@ import json
 _name_key = 'name'
 _results_key = 'results'
 _services_key = 'services'
-
+_default_key = 'default'
 
 """ Browser keys """
 _browsers_key = 'browsers'
@@ -311,13 +311,16 @@ def _get_priority_key_from_hosts_dict(host_object: dict) -> str:
 
 
 class Configurator:
+
     ic.disable()
     # ic.enable()
 
     def __init__(self, cmd_args) -> None:
+        # Commandline parameters
         self.cmd_args = cmd_args
         self.config_dir = self.cmd_args.config_dir
         self.results_dir = self.cmd_args.results_dir
+
         # Parsing yaml config
         self.config_parser = ConfigParser(self.config_dir)
         self.browsers, self.aerokube, self.hosts, self.teams = self.config_parser()
@@ -359,6 +362,7 @@ class Configurator:
 
     def configurate(self) -> None:
         """ Create config dirs and files """
+
         ggr_root_path = f'{self.results_dir}/ggr'
         selenoid_root_path = f'{self.results_dir}/selenoid'
 
@@ -437,8 +441,8 @@ class Configurator:
         """ Create docker-compose.yaml file into ggr and selenoid dirs """
 
         file_name = 'docker-compose.yaml'
-        selenoid_image_type = 'selenoid'
-        ggr_image_type = 'ggr'
+        selenoid_image_type = _selenoid_key
+        ggr_image_type = _ggr_key
 
         ggr_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(ggr_image_type)
         selenoid_docker_compose_yaml_dict = self._generate_docker_compose_yaml_file(selenoid_image_type)
@@ -462,7 +466,9 @@ class Configurator:
                     path + '/' + file_name
                 ).yaml_data_dump_to_file()
 
-    def _create_htpasswd_file(self, ggr_hosts_paths):
+    def _create_htpasswd_file(self, ggr_hosts_paths: list) -> None:
+        """ Create htpasswd file for ggr teams/users-quota """
+
         file_name = 'users.htpasswd'
 
         if ggr_hosts_paths:
@@ -486,18 +492,22 @@ class Configurator:
                 file_name = self.teams_dict[_teams_quota_key][i][_name_key]
                 file_path = ggr_path + '/quota/' + file_name + '.xml'
 
-                with open(file_path, 'wb') as file:
-                    file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')
-                    xml_object = self._xml_generator(file_name)
-                    file.write(xml_object)
-                    file.write(b'</qa:browsers>')
+                xml_object = self._xml_generator(file_name)
 
-    def _xml_generator(self, team_name):
-        # Browser template
-        browser_elem_key = 'browser'
-        version_elem_key = 'version'
-        region_elem_key = 'region'
-        host_elem_key = 'host'
+                if xml_object != b'':
+                    with open(file_path, 'wb') as file:
+                        file.write(b'<qa:browsers xmlns:qa="urn:config.gridrouter.qatools.ru">\n')  # Workaround for xml namespace
+                        file.write(xml_object)
+                        file.write(b'</qa:browsers>')  # Workaround for xml namespace
+
+    def _xml_generator(self, team_name: str) -> bytes:
+        """ Generate xml object. Return bytes strings """
+
+        # Browser xml template (element and subelements)
+        browser_elem_key = 'browser'  # Element
+        version_elem_key = 'version'  # Subelement
+        region_elem_key = 'region'  # Subelement
+        host_elem_key = 'host'  # Subelement
 
         pretty_xml_object = b''
         browser_count = len(self.list_of_active_browsers)
@@ -515,7 +525,6 @@ class Configurator:
             all_versions_list = browser_object[_versions_key] + browser_object[_vnc_versions_key]
             version_count = len(all_versions_list)
 
-            # ic(all_versions_list, version_count)
             for j in range(version_count):
                 version_elem_dict = {
                     'number': f'{all_versions_list[j]}'
@@ -559,11 +568,11 @@ class Configurator:
             xml_object = etree.XML(tostring(browser_elem))
             pretty_xml_object += etree.tostring(xml_object, pretty_print=True)
 
-        # ic(pretty_xml_object)
         return pretty_xml_object
 
     def _browser_count_check(self) -> None:
         """ Validation: count of browsers > 0 """
+
         count = len(self.browsers)
         if count < 1:
             raise Exception('You must use at least one browser in your config')
@@ -574,6 +583,7 @@ class Configurator:
 
     def _get_active_browsers_list(self) -> list:
         """ Get list browsers with key and value 'use': true in config """
+
         browsers = []
 
         for i in range(self.count_of_all_browsers):
@@ -664,8 +674,6 @@ class Configurator:
                     self.browsers_dict[browser_name][_vnc_versions_key]
             )
 
-            # ic(versions_list)
-
             if _custom_key in default_version_object:
                 value = default_version_object[_custom_key]
             elif _highest_key in default_version_object:
@@ -745,7 +753,7 @@ class Configurator:
             }
         }
 
-        if 'selenoid-ui' in self.aerokube:
+        if _selenoid_key in self.aerokube:
             aerokube_dict.update(
                 {
                     'selenoid-ui': {
@@ -755,7 +763,7 @@ class Configurator:
                 }
             )
 
-        if 'ggr' in self.aerokube:
+        if _ggr_key in self.aerokube:
             aerokube_dict.update(
                 {
                     'ggr': {
@@ -766,7 +774,7 @@ class Configurator:
                 }
             )
 
-        if 'ggr-ui' in self.aerokube:
+        if _ggr_ui_key in self.aerokube:
             aerokube_dict.update(
                 {
                     'ggr-ui': {
@@ -837,8 +845,8 @@ class Configurator:
     def _hosts_setter(self):
         """ Set hosts values from config """
 
-        if 'ggr' in self.hosts:
-            image_type = 'ggr'
+        if _ggr_key in self.hosts:
+            image_type = _ggr_key
             ggr_count = len(self.hosts[image_type])
 
             for count in range(ggr_count):
@@ -847,7 +855,7 @@ class Configurator:
                 self._set_hosts_ip(*args)
                 self._set_hosts_domain(*args)
 
-        image_type = 'selenoid'
+        image_type = _selenoid_key
 
         region_count = len(self.hosts[image_type])
         for reg_count in range(region_count):
@@ -1004,6 +1012,7 @@ class Configurator:
 
     def _teams_setter(self):
         """ Set teams values from config """
+
         teams_count = len(self.teams)
         if teams_count > 0:
             for count in range(teams_count):
@@ -1041,16 +1050,16 @@ class Configurator:
         versions = ('versions', 'vnc-versions')
 
         for browser in self.browsers_dict:
-            browsers_dict[browser]['default'] = str(self.browsers_dict[browser][_default_version_key])
+            browsers_dict[browser][_default_key] = str(self.browsers_dict[browser][_default_version_key])
 
             for version_key in versions:
                 for version in self.browsers_dict[browser][version_key]:
                     version = str(version)
 
-                    browsers_dict[browser]['versions'][version] = {}
+                    browsers_dict[browser][_versions_key][version] = {}
 
                     # Variables
-                    if version_key == 'vnc-versions':
+                    if version_key == _vnc_versions_key:
                         image = f'selenoid/vnc_{browser}:{version}'
                     else:
                         image = f'selenoid/{browser}:{version}'
@@ -1068,40 +1077,40 @@ class Configurator:
                     mem = None
 
                     if image:
-                        browsers_dict[browser]['versions'][version]['image'] = image
+                        browsers_dict[browser][_versions_key][version]['image'] = image
 
                     if port:
-                        browsers_dict[browser]['versions'][version]['port'] = port
+                        browsers_dict[browser][_versions_key][version]['port'] = port
 
                     if path:
-                        browsers_dict[browser]['versions'][version]['path'] = path
+                        browsers_dict[browser][_versions_key][version]['path'] = path
 
                     if env:
-                        browsers_dict[browser]['versions'][version]['env'] = env
+                        browsers_dict[browser][_versions_key][version]['env'] = env
 
                     if tmpfs:
-                        browsers_dict[browser]['versions'][version]['tmpfs'] = tmpfs
+                        browsers_dict[browser][_versions_key][version]['tmpfs'] = tmpfs
 
                     if volumes:
-                        browsers_dict[browser]['versions'][version]['volumes'] = volumes
+                        browsers_dict[browser][_versions_key][version]['volumes'] = volumes
 
                     if hosts:
-                        browsers_dict[browser]['versions'][version]['hosts'] = hosts
+                        browsers_dict[browser][_versions_key][version]['hosts'] = hosts
 
                     if labels:
-                        browsers_dict[browser]['versions'][version]['labels'] = labels
+                        browsers_dict[browser][_versions_key][version]['labels'] = labels
 
                     if sysctl:
-                        browsers_dict[browser]['versions'][version]['sysctl'] = sysctl
+                        browsers_dict[browser][_versions_key][version]['sysctl'] = sysctl
 
                     if shm_size:
-                        browsers_dict[browser]['versions'][version]['shmSize'] = shm_size
+                        browsers_dict[browser][_versions_key][version]['shmSize'] = shm_size
 
                     if cpu:
-                        browsers_dict[browser]['versions'][version]['cpu'] = cpu
+                        browsers_dict[browser][_versions_key][version]['cpu'] = cpu
 
                     if mem:
-                        browsers_dict[browser]['versions'][version]['mem'] = mem
+                        browsers_dict[browser][_versions_key][version]['mem'] = mem
 
         return browsers_dict
 
@@ -1208,6 +1217,7 @@ class Configurator:
                             ]
                         }
                     }
+
                     docker_compose_dict[host][_services_key].update(selenoid_ui_dict)
 
             elif image_type == _ggr_key:
@@ -1231,6 +1241,7 @@ class Configurator:
                             ]
                         }
                     }
+
                     docker_compose_dict[host][_services_key].update(ggr_dict)
 
                 if _ggr_ui_key in self.aerokube:
@@ -1255,6 +1266,7 @@ class Configurator:
                             ]
                         }
                     }
+
                     docker_compose_dict[host][_services_key].update(ggr_ui_dict)
 
         return docker_compose_dict

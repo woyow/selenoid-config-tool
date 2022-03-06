@@ -15,12 +15,8 @@ browsers:
     versions: # from min and to max in steps of 1
       range:
         min: 80.0
-        max: 98.0
+        max: 99.0
         ignore: [82.0]
-      #capabilities:
-      #  vnc_enabled: True
-      #  video_enabled: False
-      #  session_timeout: "1m"
 
   - type: chrome-mobile
     use: true

@@ -1,0 +1,48 @@
+#! /usr/bin/env python3
+
+import argparse
+import sys
+import os
+
+from helpers.change_root_dir import ChangeRootDir
+from src.configurator import Configurator
+
+
+def init() -> None:
+    try:
+        change_root_dir = ChangeRootDir()
+        change_root_dir()  # Change directory to be able to run script in different directories
+    except:
+        print("Something went wrong. Root directory not changed.")
+    finally:
+        del change_root_dir
+
+
+def main() -> None:
+    init()
+    cmd_args.config_dir = os.path.abspath(cmd_args.config_dir)
+    cmd_args.results_dir = os.path.abspath(cmd_args.results_dir)
+    print(cmd_args)
+    configurator = Configurator(cmd_args)
+    configurator()
+    print(f'Complete!\n'
+          f'\n'
+          f'Find your results into {cmd_args.results_dir} directory')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog='sctool')
+
+    parser.add_argument('-r',
+                        '--results-dir',
+                        default='./results',
+                        help='Directory to save results, default - ./results'
+                        )
+    parser.add_argument('-c',
+                        '--config-dir',
+                        default='./config',
+                        help='Directory to get yaml config file, default - ./config'
+                        )
+
+    cmd_args = parser.parse_args()
+    sys.exit(main())

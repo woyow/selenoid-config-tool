@@ -5,3 +5,4 @@ requests==2.27.1
 requests-cache==0.9.1
 htpasswd==2.3
 lxml==4.8.0
+halo==0.0.31

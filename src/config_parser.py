@@ -8,8 +8,11 @@ class ConfigParser(OpenFile):
     ic.disable()
     # ic.enable()
 
-    def __init__(self) -> None:
-        self.file_path = './config/test_config.yaml'
+    def __init__(self, config_dir) -> None:
+        self.config_dir = config_dir
+        ic(self.config_dir)
+
+        self.file_path = f'{self.config_dir}/config.yaml'
         self.schema_path = './config/schema/config_schema.yaml'
         super().__init__(self.file_path)
         self.config_file = self.open_yaml_file()

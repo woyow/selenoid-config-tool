@@ -13,7 +13,7 @@ Automatically generating directories and `browsers.json`, `docker-compose.yaml`,
   - [x] docker-compose.yaml
 - [x] teams-quota / users-quota
   - [x] htpasswd
-- [x] hosts config
+- [ ] hosts config
   - [x] standart parameters for selenoid
   - [ ] optional parameters for selenoid
   - [ ] shell-script for pull browser images from browsers-config
@@ -128,10 +128,25 @@ teams-quota: # [optional] - if use ggr balancer
 ```
 
 ## Run script
+### 1. Go to the folder and give execute permissions
 ```bash
 cd ~/selenoid-config-tool
-chmod u+x ./main.py
-./main.py
+chmod u+x ./sctool
+```
+### 2. Default usage
+```bash
+./sctool
+```
+### 3. Usage with parameters
+#### 3.1 Get help
+```bash
+./sctool --help
+```
+#### 3.2 Run with custom parameters
+```bash
+./sctool --results-dir ./your-results-dir --config-dir ./your-config-dir
+# or
+./sctool -r ./your-results-dir -c ./your-config-dir
 ```
 
 ## Results
@@ -140,3 +155,10 @@ chmod u+x ./main.py
 cd ~/selenoid-config-tool/results
 ```
 ### 2. Ready!
+
+## Possible problems
+The tool uses caching for http-responses. Therefore, in rare cases, you may not receive up-to-date information on browser versions. The cache is stored in the default folder for your user - `~/.cache/`
+#### For remove cache, usage:
+```bash
+rm ~/.cache/selenoid_config_tool_requests_cache.sqlite
+```

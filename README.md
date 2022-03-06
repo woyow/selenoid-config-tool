@@ -2,6 +2,22 @@
 Tool for management selenoid and ggr configs. 
 Automatically generating directories and `browsers.json`, `docker-compose.yaml`, `users.htpasswd` and `quota` files for selenoid and ggr.
 
+# Features:
+- [x] ggr
+  - [x] config (browsers.json)
+  - [x] quota (user.xml)
+  - [x] docker-compose.yaml
+  - [x] users.htpasswd
+- [x] selenoid
+  - [x] config (browsers.json)
+  - [x] docker-compose.yaml
+- [x] teams-quota / users-quota
+  - [x] htpasswd
+- [x] hosts config
+  - [x] standart parameters for selenoid
+  - [ ] optional parameters for selenoid
+  - [ ] shell-script for pull browser images from browsers-config
+
 # Usage
 ## Download tool
 1. Clone repository

@@ -111,6 +111,13 @@ teams-quota: # [optional] - if use ggr balancer
     password: {{ password_value }}
 ```
 
+## Run script
+```bash
+cd ~/selenoid-config-tool
+chmod u+x ./main.py
+./main.py
+```
+
 ## Results
 ### 1. Change to the directory with the results
 ```bash

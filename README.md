@@ -16,10 +16,12 @@ Automatically generating directories and `browsers.json`, `docker-compose.yaml`,
 - [x] teams-quota / users-quota
   - [x] htpasswd
 - [ ] hosts config
-  - [x] standart parameters for selenoid
-  - [ ] optional parameters for selenoid
-  - [ ] shell-script for pull browser images from browsers-config
+  - [x] standart parameters for selenoid (image, port, path)
+  - [ ] optional parameters for selenoid (env, tmpfs, volumes, hosts, labels, sysctl, shmSize, cpu, mem)
+  - [ ] shell-script for pull browsers images from browsers-config
 - [ ] Dockerfile (for usage tool into docker)
+- [ ] ??? Automatic deployment to tests servers via ssh
+  - [ ] ??? Ansible playbooks
 
 # Usage
 ## Download tool
@@ -94,7 +96,7 @@ aerokube:
     image-version: {{ image_version }} # float or latest
     host-port: {{ port_value }}
 
-  ggr:
+  ggr: # [optional]
     image-version: {{ image_version }} # float or latest
     host-port: {{ port_value }}
     

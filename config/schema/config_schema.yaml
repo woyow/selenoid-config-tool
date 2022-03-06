@@ -1,0 +1,184 @@
+type: map
+mapping:
+  browsers:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          type:
+            type: str
+            required: true
+          use:
+            type: bool
+            required: true
+          vnc-image:
+            type: map
+            mapping:
+              enable:
+                type: bool
+                required: true
+              versions:
+                type: map
+                required: true
+                mapping:
+                  range:
+                    type: map
+                    mapping:
+                      min:
+                        type: float
+                        required: true
+                      max:
+                        type: any
+                        required: true
+                      ignore:
+                        type: any
+                  array:
+                    type: any
+                  highest:
+                    type: bool
+          default-version:
+            type: map
+            required: true
+            mapping:
+              highest:
+                type: bool
+              custom:
+                type: float
+              minimal:
+                type: bool
+          versions:
+            type: map
+            required: true
+            mapping:
+              range:
+                type: map
+                mapping:
+                  min:
+                    type: float
+                    required: true
+                  max:
+                    type: any
+                    required: true
+                  ignore:
+                    type: any
+              array:
+                type: any
+              latest:
+                type: bool
+
+  aerokube:
+    type: map
+    required: true
+    mapping:
+      selenoid:
+        type: map
+        required: true
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+      selenoid-ui:
+        type: map
+        required: false
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+      ggr:
+        type: map
+        required: false
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+          encrypt-connection:
+            type: bool
+            required: false
+      ggr-ui:
+        type: map
+        required: false
+        mapping:
+          image-version:
+            type: any
+            required: true
+          host-port:
+            type: int
+            required: true
+
+  hosts:
+    type: map
+    required: true
+    mapping:
+      ggr:
+        type: seq
+        required: false
+        sequence:
+          - type: map
+            mapping:
+              ip:
+                type: any # Change to ip in pykwalify 1.8.0+
+              domain:
+                type: str
+      selenoid:
+        type: seq
+        required: true
+        sequence:
+          - type: map
+            mapping:
+              region:
+                type: map
+                required: true
+                mapping:
+                  name:
+                    type: str
+                    required: true
+                  hosts:
+                    type: seq
+                    required: true
+                    sequence:
+                      - type: map
+                        mapping:
+                          ip:
+                            type: any # Change to ip in pykwalify 1.8.0+
+                          domain:
+                            type: str
+                          port:
+                            type: int
+                          count:
+                            type: int
+                          cpu-limit:
+                            type: int
+                            required: true
+                          teams-quota:
+                            type: any
+                          vnc:
+                            type: map
+                            mapping:
+                              ip:
+                                type: any # Change to ip in pykwalify 1.8.0+
+                                required: true
+                              port:
+                                type: int
+                                required: true
+
+  teams-quota:
+    type: seq
+    required: false
+    sequence:
+      - type: map
+        mapping:
+          name:
+            type: str
+            required: true
+          password:
+            type: str
+            required: true

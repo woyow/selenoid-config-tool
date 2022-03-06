@@ -1,0 +1,8 @@
+icecream==2.1.1
+PyYAML==6.0
+pykwalify==1.8.0
+requests==2.27.1
+requests-cache==0.9.1
+htpasswd==2.3
+lxml==4.8.0
+halo==0.0.31

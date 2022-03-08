@@ -69,7 +69,7 @@ browsers:
       # You can specify a custom version from your version array using the `custom` key.
       custom: {{ custom_value }} # float
       # OR
-      # You can specify the highest version from your version array using the `minimal` key
+      # You can specify the minimal version from your version array using the `minimal` key
       minimal: true
     versions:
       # You can specify an array of the browsers you need using the `array` key

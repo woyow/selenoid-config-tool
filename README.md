@@ -19,9 +19,43 @@ Automatically generating directories and `browsers.json`, `docker-compose.yaml`,
   - [x] standart parameters for selenoid (image, port, path)
   - [ ] optional parameters for selenoid (env, tmpfs, volumes, hosts, labels, sysctl, shmSize, cpu, mem)
   - [ ] shell-script for pull browsers images from browsers-config
-- [ ] Dockerfile (for usage tool into docker)
+- [x] Dockerfile (for usage tool into docker)
 - [ ] ??? Automatic deployment to tests servers via ssh
   - [ ] ??? Ansible playbooks
+
+# Results Example
+```
+.
+├── ...
+├── results                                 # Directory with results
+│   ├── ggr                                 # Directory with ggr configs
+│   │   ├── 111.111.111.111                 # Example IP
+│   │   │   ├── config
+│   │   │   │    └── browsers.json
+│   │   │   │
+│   │   │   ├── quota
+│   │   │   │    ├── dev_team.xml
+│   │   │   │    ├── qa_team.xml
+│   │   │   │    └── test_user.xml
+│   │   │   │
+│   │   │   ├── docker-compose.yaml
+│   │   │   └── users.htpasswd
+│   │   │   
+│   │   ├── ggr-balancer.dev.example.com    # Example Host
+│   │   └── localhost
+│   │
+│   └── selenoid                            # Directory with selenoid configs
+│   │   ├── 111.111.111.112                 # Example IP
+│   │   │   ├── config
+│   │   │   │    └── browsers.json
+│   │   │   │
+│   │   │   └── docker-compose.yaml
+│   │   │
+│   │   ├── selenoid-us.dev.example.com    # Example Host
+│   │   └── localhost
+│   │
+└── ...
+```
 
 # Usage
 ## Download tool
@@ -156,6 +190,30 @@ python3 -m pip install -r requirements.txt
 ./sctool --results-dir ./your-results-dir --config-dir ./your-config-dir
 # or
 ./sctool -r ./your-results-dir -c ./your-config-dir
+```
+
+## Run tool via Docker
+### 1. Create and fill config.yaml file
+```bash
+cd ~/selenoid-config-tool/config
+touch ./config.yaml
+```
+
+### 2. Create dir for results
+```bash
+cd ~/selenoid-config-tool
+mkdir ./results
+```
+
+### 3. Build docker-image
+```bash
+cd ~/selenoid-config-tool
+docker build -t 'sctool' .
+```
+
+### 4. Run docker image with parameters
+```bash 
+docker run --rm -v ~/selenoid-config-tool/config/config.yaml:/app/config/config.yaml -v ~/selenoid-config-tool/results/:/app/results/ sctool:latest
 ```
 
 ## Results

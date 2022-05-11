@@ -19,7 +19,7 @@ browsers:
     versions: # from min and to max in steps of 1
       range:
         min: 80.0
-        max: 99.0
+        max: latest
         ignore: [82.0]
 
   - type: chrome-mobile
